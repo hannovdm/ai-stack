@@ -1,0 +1,87 @@
+{
+  // ── GitHub Copilot inline completions ─────────────────────────────────────
+  // Routes tab-autocomplete to the local vLLM qwen-coder-fast endpoint.
+  // vLLM accepts any bearer token, so no auth mismatch with the Copilot token.
+  "github.copilot.advanced": {
+    "debug.overrideProxyUrl": "http://localhost:8001",
+    "debug.overrideEngine": "qwen-coder-fast"
+  },
+
+  // ── LiteLLM local models in Copilot Chat model picker ────────────────────
+  // Each entry appears as a selectable model under the "Azure" provider in the
+  // Copilot Chat model dropdown.  All requests go to the local LiteLLM proxy;
+  // the key is the LiteLLM model_name (routed to the correct vLLM backend).
+  // API key: supersecret123  (enter once via the model-picker UI on first use)
+  "github.copilot.chat.azureModels": {
+    // ── GPU 0 · Qwen3-Coder-30B ──────────────────────────────────────────
+    "vscode.chat": {
+      "name": "VS Code Chat  (Qwen3-Coder-30B · GPU0)",
+      "url": "http://localhost:4000",
+      "toolCalling": true,
+      "vision": false,
+      "maxInputTokens": 32768,
+      "maxOutputTokens": 8192
+    },
+    "vscode.debug": {
+      "name": "VS Code Debug  (Qwen3-Coder-30B · GPU0)",
+      "url": "http://localhost:4000",
+      "toolCalling": true,
+      "vision": false,
+      "maxInputTokens": 32768,
+      "maxOutputTokens": 8192
+    },
+    "azure.iac": {
+      "name": "Azure IaC  (Qwen3-Coder-30B · GPU0)",
+      "url": "http://localhost:4000",
+      "toolCalling": true,
+      "vision": false,
+      "maxInputTokens": 32768,
+      "maxOutputTokens": 12000
+    },
+    "azure.deploy.review": {
+      "name": "Azure Deploy Review  (Qwen3-Coder-30B · GPU0)",
+      "url": "http://localhost:4000",
+      "toolCalling": true,
+      "vision": false,
+      "maxInputTokens": 32768,
+      "maxOutputTokens": 8192
+    },
+    // ── GPU 1 · Qwen3-8B (general) ───────────────────────────────────────
+    "general.chat": {
+      "name": "General Chat  (Qwen3-8B · GPU1)",
+      "url": "http://localhost:4000",
+      "toolCalling": true,
+      "vision": false,
+      "maxInputTokens": 32768,
+      "maxOutputTokens": 4096
+    },
+    "office.assist": {
+      "name": "Office Assist  (Qwen3-8B · GPU1)",
+      "url": "http://localhost:4000",
+      "toolCalling": false,
+      "vision": false,
+      "maxInputTokens": 32768,
+      "maxOutputTokens": 4096
+    },
+    "copilot.local": {
+      "name": "Copilot Local  (Qwen3-8B · GPU1)",
+      "url": "http://localhost:4000",
+      "toolCalling": true,
+      "vision": false,
+      "maxInputTokens": 32768,
+      "maxOutputTokens": 4096
+    }
+  },
+
+  // ── MCP servers for Copilot Chat ──────────────────────────────────────────
+  // Exposes the local SpecKit LangGraph workflow as Copilot Chat tools.
+  // The mcp-gateway Docker service must be running (docker compose up mcp-gateway).
+  "mcp": {
+    "servers": {
+      "local-ai-speckit": {
+        "type": "http",
+        "url": "http://localhost:9000/mcp"
+      }
+    }
+  }
+}

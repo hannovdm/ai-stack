@@ -7,6 +7,11 @@
 .profile
 .local/
 .config/
+# VS Code settings are tracked (workstation-specific model/MCP config)
+!.config/
+!.config/Code/
+!.config/Code/User/
+!.config/Code/User/settings.json
 .cache/
 .ssh/
 .gnupg/

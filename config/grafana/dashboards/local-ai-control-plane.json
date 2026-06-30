@@ -255,7 +255,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "currencyUSD"
+          "unit": "currencyAED"
         },
         "overrides": []
       }
@@ -480,7 +480,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "currencyUSD"
+          "unit": "currencyAED"
         },
         "overrides": []
       },

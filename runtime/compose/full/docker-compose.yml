@@ -175,6 +175,9 @@ services:
       - "--load-format"
       - "bitsandbytes"
       - "--enforce-eager"
+      - "--enable-auto-tool-choice"
+      - "--tool-call-parser"
+      - "hermes"
       - "--download-dir"
       - "/root/.cache/huggingface"
     environment:
@@ -335,6 +338,9 @@ services:
       - "--quantization"
       - "fp8"
       - "--enforce-eager"
+      - "--enable-auto-tool-choice"
+      - "--tool-call-parser"
+      - "hermes"
       - "--download-dir"
       - "/root/.cache/huggingface"
     environment:

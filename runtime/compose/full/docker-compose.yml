@@ -1,0 +1,526 @@
+name: ai-local-stack
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: apppassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - type: bind
+        source: ${HOME}/data/db/postgres
+        target: /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    container_name: redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - type: bind
+        source: ${HOME}/data/redis
+        target: /data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  langfuse:
+    image: langfuse/langfuse:2
+    container_name: langfuse
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "3001:3000"
+    environment:
+      DATABASE_URL: "postgresql://app:apppassword@postgres:5432/langfuse"
+      NEXTAUTH_URL: "http://localhost:3001"
+      NEXTAUTH_SECRET: "langfuse-nextauth-secret-local-ai-stack"
+      SALT: "langfuse-salt-local-ai-xyz"
+      TELEMETRY_ENABLED: "false"
+      LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES: "true"
+      LANGFUSE_INIT_ORG_ID: "local-ai"
+      LANGFUSE_INIT_ORG_NAME: "Local AI Stack"
+      LANGFUSE_INIT_PROJECT_ID: "local-ai-project"
+      LANGFUSE_INIT_PROJECT_NAME: "AI Stack"
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: "pk-lf-local-ai-stack"
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: "sk-lf-local-ai-stack"
+      LANGFUSE_INIT_USER_EMAIL: "admin@local.ai"
+      LANGFUSE_INIT_USER_NAME: "admin"
+      LANGFUSE_INIT_USER_PASSWORD: "Admin@1234"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: litellm
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      langfuse:
+        condition: service_started
+    command:
+      - "--config"
+      - "/app/config/litellm.config.yaml"
+      - "--port"
+      - "4000"
+      - "--host"
+      - "0.0.0.0"
+    ports:
+      - "4000:4000"
+    environment:
+      PYTHONUNBUFFERED: "1"
+      LITELLM_LOG: "INFO"
+      LITELLM_MASTER_KEY: "supersecret123"
+      UI_USERNAME: "admin"
+      UI_PASSWORD: "Pass1word"
+      DATABASE_URL: "postgresql://app:apppassword@postgres:5432/app"
+      VLLM_API_KEY: "dummy"
+      LANGFUSE_HOST: "http://langfuse:3000"
+      LANGFUSE_PUBLIC_KEY: "pk-lf-local-ai-stack"
+      LANGFUSE_SECRET_KEY: "sk-lf-local-ai-stack"
+      REDIS_URL: "redis://redis:6379"
+    volumes:
+      - type: bind
+        source: ${HOME}/config/litellm
+        target: /app/config
+        read_only: true
+      - type: bind
+        source: ${HOME}/data/logs/litellm
+        target: /app/logs
+
+  langgraph:
+    build:
+      context: ${HOME}/workspace/orchestrator
+      dockerfile: Dockerfile
+    container_name: langgraph
+    restart: unless-stopped
+    depends_on:
+      litellm:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      PYTHONUNBUFFERED: "1"
+      DATABASE_URL: "postgresql://app:apppassword@postgres:5432/app"
+      REDIS_URL: "redis://redis:6379/0"
+      LITELLM_BASE_URL: "http://litellm:4000"
+      LITELLM_API_KEY: "supersecret123"
+      POLICY_EVAL_URL: "http://policy-eval:8090/evaluate"
+      ARTIFACT_ROOT: "/data/artifacts"
+      CACHE_DIR: "/cache"
+    volumes:
+      - type: bind
+        source: ${HOME}/workspace/orchestrator
+        target: /app
+      - type: bind
+        source: ${HOME}/data/artifacts
+        target: /data/artifacts
+      - type: bind
+        source: ${HOME}/cache
+        target: /cache
+      - type: bind
+        source: ${HOME}/data/logs/langgraph
+        target: /app/logs
+
+  vllm-qwen3-coder-gpu0:
+    image: vllm/vllm-openai:latest
+    container_name: vllm-qwen3-coder-gpu0
+    restart: unless-stopped
+    ipc: host
+    shm_size: "16gb"
+    ports:
+      - "8000:8000"
+    command:
+      - "--model"
+      - "/models/foundation/qwen3-coder-30b"
+      - "--served-model-name"
+      - "qwen3-coder-30b"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8000"
+      - "--gpu-memory-utilization"
+      - "0.92"
+      - "--max-model-len"
+      - "8192"
+      - "--quantization"
+      # Qwen2.5-32B is 61 GiB BF16; FP8 auto-quantization still requires ~31.2 GiB
+      # which exceeds 31.84 GiB with CUDA overhead. INT4 via bitsandbytes = ~16 GiB.
+      - "bitsandbytes"
+      - "--load-format"
+      - "bitsandbytes"
+      - "--enforce-eager"
+      - "--download-dir"
+      - "/root/.cache/huggingface"
+    environment:
+      HF_HOME: /root/.cache/huggingface
+      TRANSFORMERS_CACHE: /root/.cache/huggingface
+      # WSL2 lacks CUDA UVA; V2 model runner's StagedWriteTensor requires it.
+      # Use V1 model runner to avoid initialization overhead and UVA checks.
+      VLLM_USE_V2_MODEL_RUNNER: "0"
+    volumes:
+      - type: bind
+        source: ${HOME}/models
+        target: /models
+        read_only: true
+      - type: bind
+        source: ${HOME}/cache/huggingface
+        target: /root/.cache/huggingface
+      - type: bind
+        source: ${HOME}/runtime/vllm/gpu0
+        target: /var/tmp/vllm
+      - type: bind
+        source: ${HOME}/data/logs/vllm-qwen3-coder-gpu0
+        target: /var/log/vllm
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["0"]
+              capabilities: [gpu]
+
+  vllm-qwen-coder-fast-gpu1:
+    image: vllm/vllm-openai:latest
+    container_name: vllm-qwen-coder-fast-gpu1
+    restart: unless-stopped
+    ipc: host
+    shm_size: "8gb"
+    ports:
+      - "8001:8001"
+    command:
+      - "--model"
+      - "/models/foundation/qwen-coder-fast"
+      - "--served-model-name"
+      - "qwen-coder-fast"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8001"
+      - "--gpu-memory-utilization"
+      # 3 models share GPU1 (~22 GiB weights with fp8); 0.32 gives ~2.7 GiB KV cache
+      - "0.32"
+      - "--max-model-len"
+      - "8192"
+      - "--quantization"
+      # fp8 halves model memory: 14.3 GiB BF16 -> ~7.2 GiB, required to fit 3 models on GPU1
+      - "fp8"
+      - "--download-dir"
+      - "/root/.cache/huggingface"
+    environment:
+      HF_HOME: /root/.cache/huggingface
+      TRANSFORMERS_CACHE: /root/.cache/huggingface
+    volumes:
+      - type: bind
+        source: ${HOME}/models
+        target: /models
+        read_only: true
+      - type: bind
+        source: ${HOME}/cache/huggingface
+        target: /root/.cache/huggingface
+      - type: bind
+        source: ${HOME}/runtime/vllm/gpu1
+        target: /var/tmp/vllm
+      - type: bind
+        source: ${HOME}/data/logs/vllm-qwen-coder-fast-gpu1
+        target: /var/log/vllm
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["1"]
+              capabilities: [gpu]
+
+  vllm-qwen3-embedding-gpu1:
+    image: vllm/vllm-openai:latest
+    container_name: vllm-qwen3-embedding-gpu1
+    restart: unless-stopped
+    ipc: host
+    shm_size: "4gb"
+    ports:
+      - "8002:8002"
+    command:
+      - "--model"
+      - "/models/embedding/qwen3-embedding"
+      - "--served-model-name"
+      - "qwen3-embedding"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8002"
+      - "--gpu-memory-utilization"
+      # vLLM v0.21+ includes CUDA graph memory in budget; 0.20 was too low
+      # (CUDA graph profiling alone consumed 2.92 GiB, leaving -13.6 GiB for KV)
+      # --enforce-eager eliminates 2.92 GiB CUDA graph overhead entirely
+      - "0.32"
+      - "--max-model-len"
+      - "4096"
+      - "--enforce-eager"
+      - "--download-dir"
+      - "/root/.cache/huggingface"
+    environment:
+      HF_HOME: /root/.cache/huggingface
+      TRANSFORMERS_CACHE: /root/.cache/huggingface
+    volumes:
+      - type: bind
+        source: ${HOME}/models
+        target: /models
+        read_only: true
+      - type: bind
+        source: ${HOME}/cache/huggingface
+        target: /root/.cache/huggingface
+      - type: bind
+        source: ${HOME}/runtime/vllm/gpu1
+        target: /var/tmp/vllm
+      - type: bind
+        source: ${HOME}/data/logs/vllm-qwen3-embedding-gpu1
+        target: /var/log/vllm
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["1"]
+              capabilities: [gpu]
+
+  vllm-qwen3-general-gpu1:
+    image: vllm/vllm-openai:latest
+    container_name: vllm-qwen3-general-gpu1
+    restart: unless-stopped
+    ipc: host
+    shm_size: "8gb"
+    ports:
+      - "8003:8003"
+    command:
+      - "--model"
+      - "/models/foundation/qwen3-general"
+      - "--served-model-name"
+      - "qwen3-general"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8003"
+      - "--gpu-memory-utilization"
+      # fp8 halves model: 15.3 GiB BF16 -> ~7.6 GiB; GPU1 total with 3 models ~22 GiB
+      - "0.33"
+      - "--max-model-len"
+      # Available KV cache is 0.69 GiB; max supportable context = 4992 tokens
+      - "4096"
+      - "--quantization"
+      - "fp8"
+      - "--enforce-eager"
+      - "--download-dir"
+      - "/root/.cache/huggingface"
+    environment:
+      HF_HOME: /root/.cache/huggingface
+      TRANSFORMERS_CACHE: /root/.cache/huggingface
+      # WSL2 does not support CUDA UVA; the V2 model runner's StagedWriteTensor
+      # requires it (RuntimeError: UVA is not available). Force V1 model runner.
+      VLLM_USE_V2_MODEL_RUNNER: "0"
+    volumes:
+      - type: bind
+        source: ${HOME}/models
+        target: /models
+        read_only: true
+      - type: bind
+        source: ${HOME}/cache/huggingface
+        target: /root/.cache/huggingface
+      - type: bind
+        source: ${HOME}/runtime/vllm/gpu1
+        target: /var/tmp/vllm
+      - type: bind
+        source: ${HOME}/data/logs/vllm-qwen3-general-gpu1
+        target: /var/log/vllm
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["1"]
+              capabilities: [gpu]
+
+  foundry-local:
+    image: ghcr.io/your-org/foundry-local:latest
+    container_name: foundry-local
+    restart: unless-stopped
+    profiles: ["foundry"]
+    ports:
+      - "8100:8100"
+    environment:
+      MODEL_ROOT: /models
+      CACHE_DIR: /cache
+      CONFIG_DIR: /app/config
+    volumes:
+      - type: bind
+        source: ${HOME}/models
+        target: /models
+        read_only: true
+      - type: bind
+        source: ${HOME}/cache
+        target: /cache
+      - type: bind
+        source: ${HOME}/config/foundry-local
+        target: /app/config
+        read_only: true
+      - type: bind
+        source: ${HOME}/data/artifacts
+        target: /data/artifacts
+      - type: bind
+        source: ${HOME}/data/logs/foundry-local
+        target: /app/logs
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["1"]
+              capabilities: [gpu]
+
+  mcp-gateway:
+    build:
+      context: ${HOME}/workspace/mcp-gateway
+      dockerfile: Dockerfile
+    container_name: mcp-gateway
+    restart: unless-stopped
+    depends_on:
+      langgraph:
+        condition: service_started
+    ports:
+      - "9000:9000"
+    environment:
+      PYTHONUNBUFFERED: "1"
+      LANGGRAPH_URL: "http://langgraph:8080"
+      ARTIFACTS_ROOT: "/data/artifacts/speckit"
+    volumes:
+      - type: bind
+        source: ${HOME}/data/artifacts
+        target: /data/artifacts
+
+  policy-eval:
+    build:
+      context: ${HOME}/workspace/policy-eval
+      dockerfile: Dockerfile
+    container_name: policy-eval
+    restart: unless-stopped
+    depends_on:
+      litellm:
+        condition: service_started
+    ports:
+      - "8090:8090"
+    environment:
+      PYTHONUNBUFFERED: "1"
+      LITELLM_BASE_URL: "http://litellm:4000"
+      LITELLM_API_KEY: "supersecret123"
+      POLICIES_DIR: "/config/policies"
+    volumes:
+      - type: bind
+        source: ${HOME}/config/policies
+        target: /config/policies
+        read_only: true
+
+  langfuse-exporter:
+    build:
+      context: ${HOME}/runtime/services/langfuse
+      dockerfile: Dockerfile
+    container_name: langfuse-exporter
+    restart: unless-stopped
+    depends_on:
+      langfuse:
+        condition: service_started
+    ports:
+      - "9420:9420"
+    environment:
+      LANGFUSE_HOST: "http://langfuse:3000"
+      LANGFUSE_PUBLIC_KEY: "pk-lf-local-ai-stack"
+      LANGFUSE_SECRET_KEY: "sk-lf-local-ai-stack"
+      POLL_INTERVAL: "30"
+      PORT: "9420"
+
+  dcgm-exporter:
+    image: nvcr.io/nvidia/k8s/dcgm-exporter:3.3.5-3.4.0-ubuntu22.04
+    container_name: dcgm-exporter
+    restart: unless-stopped
+    cap_add:
+      - SYS_ADMIN
+    ports:
+      - "9400:9400"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+    ports:
+      - "9090:9090"
+    volumes:
+      - type: bind
+        source: ${HOME}/config/prometheus
+        target: /etc/prometheus
+        read_only: true
+      - type: bind
+        source: ${HOME}/data/prometheus
+        target: /prometheus
+
+  grafana:
+    image: grafana/grafana:13.1.0
+    container_name: grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - type: bind
+        source: ${HOME}/data/grafana
+        target: /var/lib/grafana
+      - type: bind
+        source: ${HOME}/config/grafana/provisioning
+        target: /etc/grafana/provisioning
+        read_only: true
+      - type: bind
+        source: ${HOME}/config/grafana/dashboards
+        target: /var/lib/grafana/dashboards
+        read_only: true
+
+networks:
+  default:
+    name: ai-local-net

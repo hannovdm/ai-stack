@@ -1,0 +1,242 @@
+# config/litellm.config.yaml
+
+model_list:
+# ---------------------------------------------------------------------------
+# GPU 0: heavy coding / SpecKit / Azure IaC
+# ---------------------------------------------------------------------------
+
+- model_name: speckit.discover
+  litellm_params:
+    model: hosted_vllm/qwen3-coder-30b
+    api_base: http://vllm-qwen3-coder-gpu0:8000/v1
+    api_key: os.environ/VLLM_API_KEY
+    request_timeout: 300
+    temperature: 0.2
+    max_tokens: 4096
+  model_info:
+    mode: chat
+    input_cost_per_token: 0
+    output_cost_per_token: 0
+    gpu: "0"
+    purpose: "SpecKit discovery, repo scan, architecture intake"
+
+- model_name: speckit.specify
+  litellm_params:
+    model: hosted_vllm/qwen3-coder-30b
+    api_base: http://vllm-qwen3-coder-gpu0:8000/v1
+    api_key: os.environ/VLLM_API_KEY
+    request_timeout: 300
+    temperature: 0.15
+    max_tokens: 8192
+  model_info:
+    mode: chat
+    gpu: "0"
+    purpose: "SpecKit requirements and specification authoring"
+
+- model_name: speckit.plan
+  litellm_params:
+    model: hosted_vllm/qwen3-coder-30b
+    api_base: http://vllm-qwen3-coder-gpu0:8000/v1
+    api_key: os.environ/VLLM_API_KEY
+    request_timeout: 300
+    temperature: 0.2
+    max_tokens: 8192
+  model_info:
+    mode: chat
+    gpu: "0"
+    purpose: "Architecture and implementation planning"
+
+- model_name: speckit.tasks
+  litellm_params:
+    model: hosted_vllm/qwen3-coder-30b
+    api_base: http://vllm-qwen3-coder-gpu0:8000/v1
+    api_key: os.environ/VLLM_API_KEY
+    request_timeout: 300
+    temperature: 0.15
+    max_tokens: 8192
+  model_info:
+    mode: chat
+    gpu: "0"
+    purpose: "Task breakdown and work item generation"
+
+- model_name: speckit.implement
+  litellm_params:
+    model: hosted_vllm/qwen3-coder-30b
+    api_base: http://vllm-qwen3-coder-gpu0:8000/v1
+    api_key: os.environ/VLLM_API_KEY
+    request_timeout: 600
+    temperature: 0.1
+    max_tokens: 12000
+  model_info:
+    mode: chat
+    gpu: "0"
+    purpose: "Code generation and implementation"
+
+- model_name: speckit.validate
+  litellm_params:
+    model: hosted_vllm/qwen3-coder-30b
+    api_base: http://vllm-qwen3-coder-gpu0:8000/v1
+    api_key: os.environ/VLLM_API_KEY
+    request_timeout: 300
+    temperature: 0.05
+    max_tokens: 8192
+  model_info:
+    mode: chat
+    gpu: "0"
+    purpose: "Code review, policy review, test validation"
+
+- model_name: vscode.chat
+  litellm_params:
+    model: hosted_vllm/qwen3-coder-30b
+    api_base: http://vllm-qwen3-coder-gpu0:8000/v1
+    api_key: os.environ/VLLM_API_KEY
+    request_timeout: 300
+    temperature: 0.15
+    max_tokens: 8192
+  model_info:
+    mode: chat
+    gpu: "0"
+    purpose: "VS Code coding assistant chat"
+
+- model_name: vscode.debug
+  litellm_params:
+    model: hosted_vllm/qwen3-coder-30b
+    api_base: http://vllm-qwen3-coder-gpu0:8000/v1
+    api_key: os.environ/VLLM_API_KEY
+    request_timeout: 300
+    temperature: 0.05
+    max_tokens: 8192
+  model_info:
+    mode: chat
+    gpu: "0"
+    purpose: "Stack trace analysis, bug fixing, test failure diagnosis"
+
+- model_name: azure.iac
+  litellm_params:
+    model: hosted_vllm/qwen3-coder-30b
+    api_base: http://vllm-qwen3-coder-gpu0:8000/v1
+    api_key: os.environ/VLLM_API_KEY
+    request_timeout: 300
+    temperature: 0.1
+    max_tokens: 12000
+  model_info:
+    mode: chat
+    gpu: "0"
+    purpose: "Azure Bicep, Terraform, AVM, landing zone and deployment code"
+
+- model_name: azure.deploy.review
+  litellm_params:
+    model: hosted_vllm/qwen3-coder-30b
+    api_base: http://vllm-qwen3-coder-gpu0:8000/v1
+    api_key: os.environ/VLLM_API_KEY
+    request_timeout: 300
+    temperature: 0.05
+    max_tokens: 8192
+  model_info:
+    mode: chat
+    gpu: "0"
+    purpose: "Azure deployment readiness, IaC diffs, security/policy review"
+
+# ---------------------------------------------------------------------------
+# GPU 1: fast autocomplete / embeddings / general chat / Office assist
+# ---------------------------------------------------------------------------
+
+- model_name: vscode.autocomplete
+  litellm_params:
+    model: hosted_vllm/qwen-coder-fast
+    api_base: http://vllm-qwen-coder-fast-gpu1:8001/v1
+    api_key: os.environ/VLLM_API_KEY
+    request_timeout: 60
+    temperature: 0.05
+    max_tokens: 256
+  model_info:
+    mode: completion
+    gpu: "1"
+    purpose: "Low-latency code completion and FIM-style autocomplete"
+
+- model_name: embeddings
+  litellm_params:
+    model: hosted_vllm/qwen3-embedding
+    api_base: http://vllm-qwen3-embedding-gpu1:8002/v1
+    api_key: os.environ/VLLM_API_KEY
+    request_timeout: 120
+  model_info:
+    mode: embedding
+    gpu: "1"
+    purpose: "RAG, repo indexing, SpecKit context retrieval"
+
+- model_name: general.chat
+  litellm_params:
+    model: hosted_vllm/qwen3-general
+    api_base: http://vllm-qwen3-general-gpu1:8003/v1
+    api_key: os.environ/VLLM_API_KEY
+    request_timeout: 180
+    temperature: 0.4
+    max_tokens: 4096
+  model_info:
+    mode: chat
+    gpu: "1"
+    purpose: "General assistant, summarization, non-code Q&A"
+
+- model_name: office.assist
+  litellm_params:
+    model: hosted_vllm/qwen3-general
+    api_base: http://vllm-qwen3-general-gpu1:8003/v1
+    api_key: os.environ/VLLM_API_KEY
+    request_timeout: 180
+    temperature: 0.35
+    max_tokens: 4096
+  model_info:
+    mode: chat
+    gpu: "1"
+    purpose: "Custom O365 helper workflows: summarize, draft, explain"
+
+# ---------------------------------------------------------------------------
+# Friendly catch-all aliases
+# ---------------------------------------------------------------------------
+
+- model_name: copilot.local
+  litellm_params:
+    model: hosted_vllm/qwen3-general
+    api_base: http://vllm-qwen3-general-gpu1:8003/v1
+    api_key: os.environ/VLLM_API_KEY
+    request_timeout: 180
+    temperature: 0.35
+    max_tokens: 4096
+  model_info:
+    mode: chat
+    gpu: "1"
+    purpose: "Default local Copilot-style assistant"
+
+router_settings:
+  routing_strategy: least-busy
+  redis_host: redis
+  redis_port: 6379
+  num_retries: 2
+  timeout: 300
+  cooldown_time: 30
+
+# Optional if you add duplicate deployments later.
+# LiteLLM load balances across deployments with the same model_name.
+  allowed_fails: 3
+
+litellm_settings:
+  drop_params: true
+  set_verbose: false
+  require_auth_for_metrics_endpoint: false
+  # If you use Langfuse in your current observability stack.
+  success_callback:
+    - langfuse
+    - prometheus
+  failure_callback:
+    - langfuse
+  service_callback:
+    - prometheus
+  # Useful with OpenAI-compatible vLLM endpoints.
+  request_timeout: 300
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
+  store_model_in_db: false
+

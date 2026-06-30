@@ -1,0 +1,13 @@
+apiVersion: 1
+
+providers:
+  - name: "Local AI Dashboards"
+    orgId: 1
+    folder: "Local AI"
+    type: file
+    disableDeletion: false
+    allowUiUpdates: true
+    updateIntervalSeconds: 15
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

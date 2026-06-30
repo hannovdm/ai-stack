@@ -1,0 +1,90 @@
+# config/routing.config.yaml
+
+routes:
+speckit:
+discover:
+model: speckit.discover
+reason: "Discovery needs long-context repo and architecture understanding."
+gpu: 0
+
+specify:
+model: speckit.specify
+reason: "Structured specification generation benefits from deterministic code-aware output."
+gpu: 0
+
+plan:
+model: speckit.plan
+reason: "Design and implementation planning requires stronger reasoning."
+gpu: 0
+
+tasks:
+model: speckit.tasks
+reason: "Task generation should stay aligned to the implementation model."
+gpu: 0
+
+implement:
+model: speckit.implement
+reason: "Main coding path; use strongest code model."
+gpu: 0
+
+validate:
+model: speckit.validate
+reason: "Review and validation should be low-temperature and precise."
+gpu: 0
+
+vscode:
+chat:
+model: vscode.chat
+reason: "Interactive coding chat with repo/context awareness."
+gpu: 0
+
+debug:
+model: vscode.debug
+reason: "Debugging requires deterministic analysis over stack traces and failing tests."
+gpu: 0
+
+autocomplete:
+model: vscode.autocomplete
+reason: "Autocomplete needs sub-second-ish latency and should not contend with heavy coding requests."
+gpu: 1
+
+azure:
+bicep:
+model: azure.iac
+reason: "Bicep is Azure-native IaC; model must understand Azure resource syntax."
+gpu: 0
+
+terraform:
+model: azure.iac
+reason: "Terraform on Azure needs provider/resource/state knowledge."
+gpu: 0
+
+deployment_review:
+model: azure.deploy.review
+reason: "Deployment review should be precise, low-temperature, and policy-aware."
+gpu: 0
+
+retrieval:
+embeddings:
+model: embeddings
+reason: "Embedding workloads are high-frequency and should not block coding."
+gpu: 1
+
+copilot:
+local_default:
+model: copilot.local
+reason: "Default local assistant route for OpenAI-compatible Copilot-like clients."
+gpu: 1
+
+office_assist:
+model: office.assist
+reason: "For custom Office helper workflows, not native Microsoft 365 Copilot backend replacement."
+gpu: 1
+
+defaults:
+chat: copilot.local
+code: vscode.chat
+debug: vscode.debug
+autocomplete: vscode.autocomplete
+embeddings: embeddings
+azure_iac: azure.iac

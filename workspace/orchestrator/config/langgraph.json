@@ -1,0 +1,6 @@
+{
+  "dependencies": [".."],
+  "graphs": {
+    "speckit": "../speckit_graph/graph.py:graph"
+  }
+}

@@ -1,0 +1,66 @@
+# ── Home directory dotfiles / system dirs ──────────────────────────
+.aws/
+.azure/
+.bash_history
+.bash_logout
+.bashrc
+.profile
+.local/
+.config/
+.cache/
+.ssh/
+.gnupg/
+.vscode-server/
+.npm/
+.nvm/
+.pyenv/
+.cargo/
+.rustup/
+.conda/
+.jupyter/
+snap/
+
+# ── Project: sensitive configuration ───────────────────────────────
+config/env/
+
+# ── Project: large / generated data dirs ───────────────────────────
+data/
+models/
+cache/
+
+# ── Project: Docker volume data ────────────────────────────────────
+runtime/volumes/
+
+# ── Python ─────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+
+# ── Node ───────────────────────────────────────────────────────────
+node_modules/
+
+# ── OS ─────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Secrets ────────────────────────────────────────────────────────
+*.key
+*.pem
+*.p12
+*.pfx
+*.secret
+.env
+*.env.local
+
+# ── Windows artifacts ──────────────────────────────────────────────
+*:Zone.Identifier

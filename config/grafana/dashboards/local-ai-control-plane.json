@@ -51,7 +51,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(litellm_proxy_total_requests_metric[5m]))",
+          "expr": "sum(rate(litellm_proxy_total_requests_metric_total[5m]))",
           "refId": "A"
         }
       ],
@@ -85,7 +85,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(litellm_proxy_failed_requests_metric[5m])) / clamp_min(sum(rate(litellm_proxy_total_requests_metric[5m])),1)",
+          "expr": "(sum(rate(litellm_deployment_total_requests_total[5m])) - sum(rate(litellm_deployment_success_responses_total[5m]))) / clamp_min(sum(rate(litellm_deployment_total_requests_total[5m])),1)",
           "refId": "A"
         }
       ],
@@ -255,7 +255,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "currencyAED"
+          "unit": "AED "
         },
         "overrides": []
       }
@@ -404,7 +404,7 @@
       },
       "targets": [
         {
-          "expr": "sum by (model) (rate(litellm_proxy_total_requests_metric{model=~\"$model\"}[5m]))",
+          "expr": "sum by (model) (rate(litellm_proxy_total_requests_metric_total{model=~\"$model\"}[5m]))",
           "legendFormat": "{{model}}",
           "refId": "A"
         }
@@ -436,12 +436,12 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(litellm_input_tokens_metric{model=~\"$model\"}[5m]))",
+          "expr": "sum(rate(litellm_input_tokens_metric_total{model=~\"$model\"}[5m]))",
           "legendFormat": "input",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(litellm_output_tokens_metric{model=~\"$model\"}[5m]))",
+          "expr": "sum(rate(litellm_output_tokens_metric_total{model=~\"$model\"}[5m]))",
           "legendFormat": "output",
           "refId": "B"
         }
@@ -473,14 +473,14 @@
       },
       "targets": [
         {
-          "expr": "sum by (model) (rate(litellm_spend_metric{model=~\"$model\"}[5m]))",
+          "expr": "sum by (model) (rate(litellm_spend_metric_total{model=~\"$model\"}[5m]))",
           "legendFormat": "{{model}}",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "currencyAED"
+          "unit": "AED "
         },
         "overrides": []
       },
@@ -612,7 +612,7 @@
     {
       "id": 20,
       "type": "timeseries",
-      "title": "vLLM KV/GPU Cache Usage",
+      "title": "vLLM KV Cache Usage %",
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -628,11 +628,6 @@
           "expr": "avg(vllm:kv_cache_usage_perc)",
           "legendFormat": "kv_cache_usage_perc",
           "refId": "A"
-        },
-        {
-          "expr": "avg(vllm:gpu_cache_usage_perc)",
-          "legendFormat": "gpu_cache_usage_perc",
-          "refId": "B"
         }
       ],
       "fieldConfig": {
@@ -1117,7 +1112,7 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "query": "label_values(litellm_total_tokens_metric, model)",
+        "query": "label_values(litellm_total_tokens_metric_total, model)",
         "includeAll": true,
         "multi": true,
         "refresh": 2,

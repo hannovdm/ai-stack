@@ -181,7 +181,10 @@ services:
       - "--enforce-eager"
       - "--enable-auto-tool-choice"
       - "--tool-call-parser"
-      - "hermes"
+      # qwen3_coder is the correct parser for Qwen3-Coder models (not hermes).
+      # hermes parser expects <tool_call> tags but Qwen3-Coder uses
+      # <function=...>/<parameter=...> XML format parsed by qwen3_coder.
+      - "qwen3_coder"
       - "--download-dir"
       - "/root/.cache/huggingface"
     environment:
@@ -344,7 +347,8 @@ services:
       - "--enforce-eager"
       - "--enable-auto-tool-choice"
       - "--tool-call-parser"
-      - "hermes"
+      # qwen3_xml is the correct parser for Qwen3 base/general models.
+      - "qwen3_xml"
       - "--download-dir"
       - "/root/.cache/huggingface"
     environment:

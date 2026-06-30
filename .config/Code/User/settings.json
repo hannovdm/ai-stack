@@ -8,8 +8,8 @@
   },
 
   // ── LiteLLM chat models ────────────────────────────────────────────────────
-  // Configured via C:\Users\hanno\AppData\Roaming\Code\User\chatLanguageModels.json
-  // (Windows-side file; VS Code reads from there, not from this Linux settings.json)
+  // Configured via ~/.config/Code/User/chatLanguageModels.json
+  // Groups: "LiteLLM – VS Code", "LiteLLM – General", "LiteLLM – Azure IaC", "LiteLLM – SpecKit"
 
   // ── MCP servers for Copilot Chat ──────────────────────────────────────────
   // Exposes the local SpecKit LangGraph workflow as Copilot Chat tools.

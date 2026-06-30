@@ -1,0 +1,81 @@
+[
+    {
+        "name": "LiteLLM — Local AI Stack",
+        "vendor": "customendpoint",
+        "apiType": "chat-completions",
+        "models": [
+            {
+                "id": "vscode.chat",
+                "name": "VS Code Chat  (Qwen3-Coder-30B · GPU0 · 32K)",
+                "url": "http://localhost:4000",
+                "toolCalling": false,
+                "vision": false,
+                "maxInputTokens": 28000,
+                "maxOutputTokens": 4000
+            },
+            {
+                "id": "vscode.debug",
+                "name": "VS Code Debug  (Qwen3-Coder-30B · GPU0 · 32K)",
+                "url": "http://localhost:4000",
+                "toolCalling": false,
+                "vision": false,
+                "maxInputTokens": 28000,
+                "maxOutputTokens": 4000
+            },
+            {
+                "id": "azure.iac",
+                "name": "Azure IaC  (Qwen3-Coder-30B · GPU0 · 32K)",
+                "url": "http://localhost:4000",
+                "toolCalling": false,
+                "vision": false,
+                "maxInputTokens": 28000,
+                "maxOutputTokens": 4000
+            },
+            {
+                "id": "azure.deploy.review",
+                "name": "Azure Deploy Review  (Qwen3-Coder-30B · GPU0 · 32K)",
+                "url": "http://localhost:4000",
+                "toolCalling": false,
+                "vision": false,
+                "maxInputTokens": 28000,
+                "maxOutputTokens": 4000
+            },
+            {
+                "id": "general.chat",
+                "name": "General Chat  (Qwen3-8B · GPU1 · 4K)",
+                "url": "http://localhost:4000",
+                "toolCalling": false,
+                "vision": false,
+                "maxInputTokens": 2000,
+                "maxOutputTokens": 1800
+            },
+            {
+                "id": "office.assist",
+                "name": "Office Assist  (Qwen3-8B · GPU1 · 4K)",
+                "url": "http://localhost:4000",
+                "toolCalling": false,
+                "vision": false,
+                "maxInputTokens": 2000,
+                "maxOutputTokens": 1800
+            },
+            {
+                "id": "copilot.local",
+                "name": "Copilot Local  (Qwen3-8B · GPU1 · 4K)",
+                "url": "http://localhost:4000",
+                "toolCalling": false,
+                "vision": false,
+                "maxInputTokens": 2000,
+                "maxOutputTokens": 1800
+            },
+            {
+                "id": "",
+                "name": "",
+                "url": "",
+                "toolCalling": true,
+                "vision": true,
+                "maxInputTokens": 128000,
+                "maxOutputTokens": 16000
+            }
+        ]
+    }
+]

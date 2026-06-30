@@ -7,7 +7,7 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 # HuggingFace repo IDs — update these if needed
 # ---------------------------------------------------------------------------
-HF_CODER_30B="Qwen/Qwen2.5-Coder-32B-Instruct"
+HF_CODER_30B="QuantTrio/Qwen3-Coder-30B-A3B-Instruct-AWQ"
 HF_CODER_FAST="Qwen/Qwen2.5-Coder-7B-Instruct"
 HF_EMBEDDING="Qwen/Qwen3-Embedding-4B"
 HF_GENERAL="Qwen/Qwen3-8B"
@@ -16,7 +16,9 @@ HF_GENERAL="Qwen/Qwen3-8B"
 # Local destination directories (must match docker-compose.yml volume mounts)
 # ---------------------------------------------------------------------------
 BASE="${HOME}/models"
-DEST_CODER_30B="${BASE}/foundation/qwen3-coder-30b"
+# Real Qwen3-Coder-30B-A3B-Instruct (AWQ 4-bit) lives in qwen3-coder-30b-a3b.
+# The old qwen3-coder-30b dir held a misnamed Qwen2.5-Coder-32B checkpoint.
+DEST_CODER_30B="${BASE}/foundation/qwen3-coder-30b-a3b"
 DEST_CODER_FAST="${BASE}/foundation/qwen-coder-fast"
 DEST_EMBEDDING="${BASE}/embedding/qwen3-embedding"
 DEST_GENERAL="${BASE}/foundation/qwen3-general"

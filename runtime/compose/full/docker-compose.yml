@@ -167,7 +167,10 @@ services:
       - "--gpu-memory-utilization"
       - "0.92"
       - "--max-model-len"
-      - "8192"
+      # INT4 model ~16 GiB on 31.84 GiB GPU; ~13 GiB available for KV cache.
+      # KV per token ≈ 256 KB (64 layers × 8 KV-heads × 128-dim × fp16 × 2).
+      # Theoretical max ≈ 54 K tokens; 32 K gives headroom for CUDA overhead.
+      - "32768"
       - "--quantization"
       # Qwen2.5-32B is 61 GiB BF16; FP8 auto-quantization still requires ~31.2 GiB
       # which exceeds 31.84 GiB with CUDA overhead. INT4 via bitsandbytes = ~16 GiB.

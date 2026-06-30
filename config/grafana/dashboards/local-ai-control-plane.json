@@ -404,7 +404,7 @@
       },
       "targets": [
         {
-          "expr": "sum by (model) (rate(litellm_proxy_total_requests_metric_total{model=~\"$model\"}[5m]))",
+          "expr": "sum by (model) (rate(litellm_requests_metric_total{model=~\"$model\"}[5m]))",
           "legendFormat": "{{model}}",
           "refId": "A"
         }

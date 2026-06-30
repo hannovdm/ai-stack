@@ -91,7 +91,8 @@ services:
     environment:
       PYTHONUNBUFFERED: "1"
       LITELLM_LOG: "INFO"
-      LITELLM_MASTER_KEY: "supersecret123"
+      # LITELLM_MASTER_KEY removed — localhost-only stack, no external auth needed.
+      # VS Code Copilot and all internal services connect without a key.
       UI_USERNAME: "admin"
       UI_PASSWORD: "Pass1word"
       DATABASE_URL: "postgresql://app:apppassword@postgres:5432/app"

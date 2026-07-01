@@ -92,7 +92,7 @@ model_list:
     api_key: os.environ/VLLM_API_KEY
     request_timeout: 300
     temperature: 0.15
-    max_tokens: 4000  # hard cap; 28000 input + 4000 output = 32000 < 32768
+    max_tokens: 4000  # backend max-model-len is 64K; 28K+ input + 4K output fits comfortably
   model_info:
     mode: chat
     supports_function_calling: true

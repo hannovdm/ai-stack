@@ -11,6 +11,9 @@ flowchart TD
     subgraph Proxy["Routing & Observability"]
         LiteLLM["LiteLLM Proxy<br/>(routing · auth · rate limiting)<br/>:4000"]
         Langfuse["Langfuse<br/>(tracing)<br/>:3001"]
+        Prometheus["Prometheus<br/>(metrics collection)<br/>:9090"]
+        Grafana["Grafana<br/>(dashboards)<br/>:3000"]
+        DGCMExporter["DGCM Exporter<br/>(custom metrics)<br/>:9091"]
     end
 
     subgraph GPU0["vLLM · GPU 0"]
@@ -27,6 +30,12 @@ flowchart TD
         LangGraph["LangGraph Orchestrator<br/>(speckit_graph pipeline)<br/>:8080"]
         Policy["Policy Eval Service<br/>(LLM-based review)<br/>:8090"]
         MCP["MCP Gateway<br/>(tool exposure over HTTP/MCP)<br/>:9000"]
+        FoundryLocal["Foundry Local<br/>(REST API)<br/>:8100"]
+    end
+
+    subgraph Databases["Databases"]
+        PostgreSQL["PostgreSQL<br/>(persistent data)<br/>:5432"]
+        Redis["Redis<br/>(caching · sessions)<br/>:6379"]
     end
 
     Client --> LiteLLM
@@ -35,12 +44,25 @@ flowchart TD
     LiteLLM --> Q7
     LiteLLM --> QEmb
     LiteLLM --> QGen
-
+    
     LangGraph --> LiteLLM
     LangGraph --> Policy
     Policy --> LiteLLM
     MCP --> LangGraph
     Client --> MCP
+    FoundryLocal --> LiteLLM
+    FoundryLocal --> PostgreSQL
+    FoundryLocal --> Redis
+    LangGraph --> PostgreSQL
+    LangGraph --> Redis
+    Langfuse --> Redis
+    Policy --> PostgreSQL
+    Policy --> Redis
+    Prometheus --> Grafana
+    DGCMExporter --> Prometheus
+    Prometheus -.->|scrapes| FoundryLocal
+    Prometheus -.->|scrapes| LiteLLM
+    Prometheus -.->|scrapes| LangGraph
 ```
 
 ## Directory Structure
@@ -195,6 +217,7 @@ flowchart TD
 | LangGraph orchestrator | 8080 | SpecKit pipeline execution |
 | Policy eval | 8090 | LLM-based policy / code review |
 | MCP gateway | 9000 | MCP tool server for VS Code / agents |
+| Foundry Local | 8100 | REST API for Foundry Local functionality |
 | Langfuse | 3001 | LLM tracing and observability |
 | Grafana | 3000 | Metrics dashboards |
 | Prometheus | 9090 | Metrics collection |

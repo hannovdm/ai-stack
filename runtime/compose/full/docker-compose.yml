@@ -172,9 +172,13 @@ services:
       - "0.92"
       - "--max-model-len"
       # AWQ weights ~16.8 GiB on 31.84 GiB GPU leaves ample KV cache. The model
-      # natively supports 256K context; 32K keeps parity with the LiteLLM/VS Code
-      # token budgeting (28000 input + 4000 output < 32768).
-      - "32768"
+      # natively supports 256K context. The KV-cache pool is sized by
+      # gpu-memory-utilization (0.92) at startup, so raising max-model-len does
+      # NOT consume extra GPU memory - it only lifts the per-request cap within
+      # that already-reserved pool. 64K gives generous headroom over the VS Code
+      # token budget and eliminates the off-by-one 32768 overflow (a single 64K
+      # sequence needs ~6 GiB KV, well within the ~13 GiB pool after weights).
+      - "65536"
       - "--quantization"
       # AWQ-Marlin kernels for the GEMM AWQ checkpoint (auto-detected from
       # config.json, set explicitly to ensure the fast Marlin path).
@@ -381,7 +385,9 @@ services:
               capabilities: [gpu]
 
   foundry-local:
-    image: ghcr.io/your-org/foundry-local:latest
+    build:
+      context: ${HOME}/runtime/services/foundry-local
+      dockerfile: Dockerfile
     container_name: foundry-local
     restart: unless-stopped
     profiles: ["foundry"]

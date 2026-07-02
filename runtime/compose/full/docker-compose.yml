@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_DB: app
       POSTGRES_USER: app
-      POSTGRES_PASSWORD: apppassword
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -50,7 +50,7 @@ services:
     ports:
       - "3001:3000"
     environment:
-      DATABASE_URL: "postgresql://app:apppassword@postgres:5432/langfuse"
+      DATABASE_URL: "postgresql://app:${POSTGRES_PASSWORD}@postgres:5432/langfuse"
       NEXTAUTH_URL: "http://localhost:3001"
       NEXTAUTH_SECRET: "langfuse-nextauth-secret-local-ai-stack"
       SALT: "langfuse-salt-local-ai-xyz"
@@ -64,7 +64,7 @@ services:
       LANGFUSE_INIT_PROJECT_SECRET_KEY: "sk-lf-local-ai-stack"
       LANGFUSE_INIT_USER_EMAIL: "admin@local.ai"
       LANGFUSE_INIT_USER_NAME: "admin"
-      LANGFUSE_INIT_USER_PASSWORD: "Admin@1234"
+      LANGFUSE_INIT_USER_PASSWORD: "${LANGFUSE_INIT_USER_PASSWORD}"
       REDIS_HOST: "redis"
       REDIS_PORT: "6379"
 
@@ -91,10 +91,10 @@ services:
     environment:
       PYTHONUNBUFFERED: "1"
       LITELLM_LOG: "INFO"
-      LITELLM_MASTER_KEY: "sk-local-ai-master"
+      LITELLM_MASTER_KEY: "${LITELLM_MASTER_KEY}"
       UI_USERNAME: "admin"
-      UI_PASSWORD: "Pass1word"
-      DATABASE_URL: "postgresql://app:apppassword@postgres:5432/app"
+      UI_PASSWORD: "${UI_PASSWORD}"
+      DATABASE_URL: "postgresql://app:${POSTGRES_PASSWORD}@postgres:5432/app"
       VLLM_API_KEY: "dummy"
       LANGFUSE_HOST: "http://langfuse:3000"
       LANGFUSE_PUBLIC_KEY: "pk-lf-local-ai-stack"
@@ -126,10 +126,10 @@ services:
       - "8080:8080"
     environment:
       PYTHONUNBUFFERED: "1"
-      DATABASE_URL: "postgresql://app:apppassword@postgres:5432/app"
+      DATABASE_URL: "postgresql://app:${POSTGRES_PASSWORD}@postgres:5432/app"
       REDIS_URL: "redis://redis:6379/0"
       LITELLM_BASE_URL: "http://litellm:4000"
-      LITELLM_API_KEY: "supersecret123"
+      LITELLM_API_KEY: ${LITELLM_API_KEY}
       POLICY_EVAL_URL: "http://policy-eval:8090/evaluate"
       ARTIFACT_ROOT: "/data/artifacts"
       CACHE_DIR: "/cache"
@@ -384,6 +384,78 @@ services:
               device_ids: ["1"]
               capabilities: [gpu]
 
+  # FLUX.1 Kontext [dev] image-editing model, served by ComfyUI on GPU 1.
+  # FLUX is a diffusion model and CANNOT run under vLLM, so it uses ComfyUI.
+  # Opt-in via `--profile flux`. The command below overrides the image CMD to
+  # use ComfyUI's DEFAULT smart-VRAM manager: it loads FLUX into whatever GPU 1
+  # VRAM is currently free and offloads to CPU only under memory pressure, so it
+  # naturally consumes the headroom the vLLM services aren't using. When GPU 1
+  # is idle it runs full-speed on the whole card; when the vLLM trio is loaded
+  # it adapts to the little that's left (--reserve-vram keeps a safety margin).
+  comfyui-flux-gpu1:
+    build:
+      context: ${HOME}/runtime/services/comfyui
+      dockerfile: Dockerfile
+    container_name: comfyui-flux-gpu1
+    restart: unless-stopped
+    profiles: ["flux"]
+    ipc: host
+    shm_size: "8gb"
+    ports:
+      - "8188:8188"
+    # Default smart-VRAM management (no --lowvram): use free VRAM, offload on
+    # pressure. --reserve-vram 0.7 leaves headroom so it won't OOM the card if
+    # a vLLM service is co-resident on GPU 1.
+    # --fp32-vae: FLUX's VAE overflows in fp16 (the default auto-pick) and
+    # produces all-black images; full precision fixes it (ample VRAM here).
+    command:
+      - "python"
+      - "main.py"
+      - "--listen"
+      - "0.0.0.0"
+      - "--port"
+      - "8188"
+      - "--reserve-vram"
+      - "0.7"
+      - "--fp32-vae"
+    environment:
+      # Docker's default runtime here is runc (not nvidia), so NVIDIA_VISIBLE_DEVICES
+      # is NOT consulted for device injection -- the deploy device request below
+      # injects GPUs, but the nvidia/cuda base image's baked-in "all" leaks BOTH
+      # cards into the container. Without pinning, ComfyUI grabs cuda:0 = host
+      # GPU 0 (the qwen3-coder card) and leaves GPU 1 idle at 0%.
+      # torch DOES honor CUDA_VISIBLE_DEVICES, so pin it to the 2nd exposed
+      # device (host GPU 1); ComfyUI then loads FLUX onto GPU 1 only.
+      NVIDIA_VISIBLE_DEVICES: "all"
+      CUDA_VISIBLE_DEVICES: "1"
+      HF_HOME: /root/.cache/huggingface
+      # WSL2 lacks CUDA UVA; keep parity with the vLLM services on this host.
+      PYTORCH_CUDA_ALLOC_CONF: "expandable_segments:True"
+      # kornia's @torch.jit.script segfaults at import under torch 2.11+cu128;
+      # disabling the TorchScript JIT makes it a no-op (FLUX runs eagerly, no
+      # functional loss) and lets ComfyUI start.
+      PYTORCH_JIT: "0"
+    volumes:
+      - type: bind
+        source: ${HOME}/models/comfyui
+        target: /app/ComfyUI/models
+      - type: bind
+        source: ${HOME}/models/comfyui/output
+        target: /app/ComfyUI/output
+      - type: bind
+        source: ${HOME}/cache/huggingface
+        target: /root/.cache/huggingface
+      - type: bind
+        source: ${HOME}/data/logs/comfyui-flux-gpu1
+        target: /app/ComfyUI/user
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["1"]
+              capabilities: [gpu]
+
   foundry-local:
     build:
       context: ${HOME}/runtime/services/foundry-local
@@ -457,7 +529,7 @@ services:
     environment:
       PYTHONUNBUFFERED: "1"
       LITELLM_BASE_URL: "http://litellm:4000"
-      LITELLM_API_KEY: "supersecret123"
+      LITELLM_API_KEY: ${LITELLM_API_KEY}
       POLICIES_DIR: "/config/policies"
     volumes:
       - type: bind

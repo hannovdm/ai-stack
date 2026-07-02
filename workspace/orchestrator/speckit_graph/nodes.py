@@ -17,7 +17,7 @@ from .state import SpecKitState
 # ── LLM factory ──────────────────────────────────────────────────────────────
 
 _BASE = os.getenv("LITELLM_BASE_URL", "http://litellm:4000") + "/v1"
-_KEY  = os.getenv("LITELLM_API_KEY",  "supersecret123")
+_KEY  = os.getenv("LITELLM_API_KEY")
 
 
 def _llm(model: str, **kw) -> ChatOpenAI:

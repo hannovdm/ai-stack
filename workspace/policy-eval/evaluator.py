@@ -26,7 +26,7 @@ from pydantic import BaseModel
 app = FastAPI(title="policy-eval", version="0.1.0")
 
 LITELLM_BASE_URL = os.getenv("LITELLM_BASE_URL", "http://litellm:4000") + "/v1"
-LITELLM_API_KEY  = os.getenv("LITELLM_API_KEY",  "supersecret123")
+LITELLM_API_KEY  = os.getenv("LITELLM_API_KEY")
 POLICIES_DIR     = os.getenv("POLICIES_DIR",      "/config/policies")
 DEFAULT_MODEL    = os.getenv("POLICY_MODEL",      "speckit.validate")
 

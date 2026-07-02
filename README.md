@@ -7,6 +7,7 @@ A self-hosted, GPU-accelerated AI development environment running multiple LLMs 
 ```mermaid
 flowchart TD
     Client["VS Code / MCP Clients"]
+    Comfy["ComfyUI · Web UI<br/>(image edit / generation)<br/>:8188"]
 
     subgraph Proxy["Routing & Observability"]
         LiteLLM["LiteLLM Proxy<br/>(routing · auth · rate limiting)<br/>:4000"]
@@ -20,10 +21,11 @@ flowchart TD
         Q30["Qwen3-Coder-30B · 32K<br/>speckit.* · vscode.chat<br/>vscode.debug · azure.*"]
     end
 
-    subgraph GPU1["vLLM · GPU 1"]
+    subgraph GPU1["vLLM + Diffusion · GPU 1"]
         Q7["Qwen2.5-Coder-7B · 8K<br/>vscode.autocomplete"]
         QEmb["Qwen3-Embedding-4B<br/>embeddings"]
         QGen["Qwen3-8B · 4K<br/>general.chat · office.assist"]
+        Flux["FLUX.1-Kontext-dev · bf16<br/>(diffusion image model)"]
     end
 
     subgraph Orchestration["Orchestration & Policy"]
@@ -44,6 +46,7 @@ flowchart TD
     LiteLLM --> Q7
     LiteLLM --> QEmb
     LiteLLM --> QGen
+    Comfy --> Flux
     
     LangGraph --> LiteLLM
     LangGraph --> Policy
@@ -63,6 +66,34 @@ flowchart TD
     Prometheus -.->|scrapes| FoundryLocal
     Prometheus -.->|scrapes| LiteLLM
     Prometheus -.->|scrapes| LangGraph
+
+    %% ---- warm theme · bold text · thick borders ----
+    classDef client fill:#ffcaa8,stroke:#e07b42,color:#5a2600,stroke-width:3px,font-weight:bold;
+    classDef comfy fill:#ffd98a,stroke:#e0a12d,color:#5a3a00,stroke-width:3px,font-weight:bold;
+    classDef proxy fill:#ffe0c2,stroke:#e8965a,color:#5a2f10,stroke-width:3px,font-weight:bold;
+    classDef gpu0 fill:#ffe7ba,stroke:#e0b055,color:#513800,stroke-width:3px,font-weight:bold;
+    classDef gpu1 fill:#f7cdb0,stroke:#d98a55,color:#552d0c,stroke-width:3px,font-weight:bold;
+    classDef orch fill:#ffd7c2,stroke:#e89370,color:#5a2c14,stroke-width:3px,font-weight:bold;
+    classDef db fill:#f3dcae,stroke:#d6a94f,color:#4d3800,stroke-width:3px,font-weight:bold;
+
+    class Client client;
+    class Comfy comfy;
+    class LiteLLM,Langfuse,Prometheus,Grafana,DGCMExporter proxy;
+    class Q30 gpu0;
+    class Q7,QEmb,QGen gpu1;
+    class Flux comfy;
+    class LangGraph,Policy,MCP,FoundryLocal orch;
+    class PostgreSQL,Redis db;
+
+    %% subgraph container tints (warm)
+    style Proxy fill:#fff3e8,stroke:#f0c39a,color:#7a3d16,stroke-width:2px;
+    style GPU0 fill:#fff6e6,stroke:#eecf94,color:#6b4a00,stroke-width:2px;
+    style GPU1 fill:#fdeadd,stroke:#e8b48c,color:#6b3c14,stroke-width:2px;
+    style Orchestration fill:#fff0e8,stroke:#f0b79a,color:#7a3a1c,stroke-width:2px;
+    style Databases fill:#fbf1d9,stroke:#e6cd8f,color:#5c4400,stroke-width:2px;
+
+    %% thick connector lines for visibility
+    linkStyle default stroke:#c26a33,stroke-width:2.5px;
 ```
 
 ## Directory Structure

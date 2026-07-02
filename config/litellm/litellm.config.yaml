@@ -193,6 +193,19 @@ model_list:
     gpu: "1"
     purpose: "Custom O365 helper workflows: summarize, draft, explain"
 
+- model_name: flux.kontext.dev
+  litellm_params:
+    model: hosted_vllm/qwen3-coder-30b
+    api_base: http://vllm-qwen3-coder-gpu1:8000/v1
+    api_key: os.environ/VLLM_API_KEY
+    request_timeout: 300
+    temperature: 0.2
+    max_tokens: 4096
+  model_info:
+    mode: chat
+    gpu: "1"
+    purpose: "FLUX Kontext Dev model for GPU 1"
+
 # ---------------------------------------------------------------------------
 # Friendly catch-all aliases
 # ---------------------------------------------------------------------------

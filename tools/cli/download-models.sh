@@ -11,6 +11,7 @@ HF_CODER_30B="QuantTrio/Qwen3-Coder-30B-A3B-Instruct-AWQ"
 HF_CODER_FAST="Qwen/Qwen2.5-Coder-7B-Instruct"
 HF_EMBEDDING="Qwen/Qwen3-Embedding-4B"
 HF_GENERAL="Qwen/Qwen3-8B"
+HF_RERANKER="BAAI/bge-reranker-v2-m3"
 
 # FLUX.1 Kontext [dev] for ComfyUI (image editing, GPU 1).
 # bf16 full-quality weights + VAE only exist in the GATED Black Forest Labs
@@ -34,6 +35,7 @@ DEST_CODER_30B="${BASE}/foundation/qwen3-coder-30b-a3b"
 DEST_CODER_FAST="${BASE}/foundation/qwen-coder-fast"
 DEST_EMBEDDING="${BASE}/embedding/qwen3-embedding"
 DEST_GENERAL="${BASE}/foundation/qwen3-general"
+DEST_RERANKER="${BASE}/rerankers/bge-rerankers"
 
 # ComfyUI models root (bind-mounted to /app/ComfyUI/models in docker-compose).
 COMFY="${BASE}/comfyui"
@@ -129,6 +131,7 @@ download_model "${HF_CODER_30B}"  "${DEST_CODER_30B}"
 download_model "${HF_CODER_FAST}" "${DEST_CODER_FAST}"
 download_model "${HF_EMBEDDING}"  "${DEST_EMBEDDING}"
 download_model "${HF_GENERAL}"    "${DEST_GENERAL}"
+download_model "${HF_RERANKER}"   "${DEST_RERANKER}"
 
 # ── FLUX.1 Kontext [dev] for ComfyUI ────────────────────────────────────────
 # bf16 transformer + VAE from the gated BFL repo (top-level files), and the

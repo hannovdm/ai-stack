@@ -1,0 +1,36 @@
+0 verbose cli C:\Program Files\nodejs\node.exe C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js
+1 info using npm@11.16.0
+2 info using node@v24.18.0
+3 silly config load:file:C:\Program Files\nodejs\node_modules\npm\npmrc
+4 silly config load:file:\\wsl.localhost\Ubuntu\tmp\litellm-chat-playwright\.npmrc
+5 silly config load:file:C:\Users\hanno\.npmrc
+6 silly config load:file:\\wsl.localhost\Ubuntu\tmp\litellm-chat-playwright\etc\npmrc
+7 verbose title npm install playwright@1.55.0
+8 verbose argv "install" "--prefix" "/tmp/litellm-chat-playwright" "playwright@1.55.0"
+9 verbose logfile logs-max:10 dir:\\wsl.localhost\Ubuntu\home\hanno\.npm-cache\_logs\2026-08-14T16_12_09_882Z-
+10 verbose logfile \\wsl.localhost\Ubuntu\home\hanno\.npm-cache\_logs\2026-08-14T16_12_09_882Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly allow-scripts no package.json at prefix Could not read package.json: Error: ENOENT: no such file or directory, open '\\wsl.localhost\Ubuntu\tmp\litellm-chat-playwright\package.json'
+13 silly packumentCache heap:4496293888 maxSize:1124073472 maxEntrySize:562036736
+14 verbose stack RangeError: Maximum call stack size exceeded
+14 verbose stack     at resolve (node:path:199:9)
+14 verbose stack     at realpathCached (C:\Program Files\nodejs\node_modules\npm\node_modules\@npmcli\arborist\lib\realpath.js:18:10)
+14 verbose stack     at realpathCached (C:\Program Files\nodejs\node_modules\npm\node_modules\@npmcli\arborist\lib\realpath.js:38:10)
+14 verbose stack     at realpathCached (C:\Program Files\nodejs\node_modules\npm\node_modules\@npmcli\arborist\lib\realpath.js:38:10)
+14 verbose stack     at realpathCached (C:\Program Files\nodejs\node_modules\npm\node_modules\@npmcli\arborist\lib\realpath.js:38:10)
+14 verbose stack     at realpathCached (C:\Program Files\nodejs\node_modules\npm\node_modules\@npmcli\arborist\lib\realpath.js:38:10)
+14 verbose stack     at realpathCached (C:\Program Files\nodejs\node_modules\npm\node_modules\@npmcli\arborist\lib\realpath.js:38:10)
+14 verbose stack     at realpathCached (C:\Program Files\nodejs\node_modules\npm\node_modules\@npmcli\arborist\lib\realpath.js:38:10)
+14 verbose stack     at realpathCached (C:\Program Files\nodejs\node_modules\npm\node_modules\@npmcli\arborist\lib\realpath.js:38:10)
+14 verbose stack     at realpathCached (C:\Program Files\nodejs\node_modules\npm\node_modules\@npmcli\arborist\lib\realpath.js:38:10)
+15 error Maximum call stack size exceeded
+16 silly unfinished npm timer reify 1786723935414
+17 silly unfinished npm timer reify:loadTrees 1786723935418
+18 silly unfinished npm timer idealTree:init 1786723935425
+19 verbose cwd \\wsl.localhost\Ubuntu\home\hanno
+20 verbose os Windows_NT 10.0.26200
+21 verbose node v24.18.0
+22 verbose npm  v11.16.0
+23 verbose exit 1
+24 verbose code 1
+25 error A complete log of this run can be found in: \\wsl.localhost\Ubuntu\home\hanno\.npm-cache\_logs\2026-08-14T16_12_09_882Z-debug-0.log

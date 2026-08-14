@@ -4,6 +4,7 @@ Exposes a REST interface for Foundry Local functionality.
 """
 from __future__ import annotations
 
+import asyncio
 import os
 import time
 from typing import Optional
@@ -13,6 +14,10 @@ from fastapi.responses import Response
 from pydantic import BaseModel
 from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
 import uvicorn
+
+# Ports: REST API on 8100, browser UI on 30000
+API_PORT = int(os.getenv("API_PORT", "8100"))
+UI_PORT = int(os.getenv("UI_PORT", "30000"))
 
 # Initialize Prometheus metrics
 foundry_local_requests_total = Counter('foundry_local_requests_total', 'Total requests to foundry-local', ['deployment', 'status'])
@@ -60,6 +65,16 @@ MODEL_ROOT = os.getenv("MODEL_ROOT", "/models")
 CACHE_DIR = os.getenv("CACHE_DIR", "/cache")
 CONFIG_DIR = os.getenv("CONFIG_DIR", "/app/config")
 
+
+async def _serve() -> None:
+    """Serve the same app on the REST API port and the UI port concurrently."""
+    servers = [
+        uvicorn.Server(uvicorn.Config(app, host="0.0.0.0", port=port))
+        for port in {API_PORT, UI_PORT}
+    ]
+    await asyncio.gather(*(server.serve() for server in servers))
+
+
 # Start the server
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8100)
+    asyncio.run(_serve())

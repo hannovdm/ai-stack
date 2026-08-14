@@ -465,6 +465,8 @@ services:
     profiles: ["foundry"]
     ports:
       - "8100:8100"
+      # UI access port (same app served on 30000)
+      - "30000:30000"
     environment:
       MODEL_ROOT: /models
       CACHE_DIR: /cache
@@ -504,16 +506,93 @@ services:
     depends_on:
       langgraph:
         condition: service_started
+      search-retrieval:
+        condition: service_healthy
     ports:
-      - "9000:9000"
+      - "127.0.0.1:9000:9000"
     environment:
       PYTHONUNBUFFERED: "1"
       LANGGRAPH_URL: "http://langgraph:8080"
       ARTIFACTS_ROOT: "/data/artifacts/speckit"
+      SEARCH_RETRIEVAL_URL: "http://search-retrieval:8091"
+      MCP_GATEWAY_API_KEY: ${LITELLM_MASTER_KEY}
+      MCP_ALLOWED_ORIGINS: "null,http://localhost:3000,http://127.0.0.1:3000"
+      SEARCH_APPROVAL_TTL_SECONDS: "300"
     volumes:
       - type: bind
         source: ${HOME}/data/artifacts
         target: /data/artifacts
+
+  crawl4ai:
+    image: unclecode/crawl4ai:0.9.0
+    container_name: crawl4ai
+    restart: unless-stopped
+    shm_size: "1gb"
+    ports:
+      - "127.0.0.1:11235:11235"
+    environment:
+      CRAWL4AI_API_TOKEN: ${CRAWL4AI_API_TOKEN:-local-search-crawl4ai}
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:11235/health', timeout=5)"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  bge-reranker:
+    build:
+      context: ${HOME}/workspace/bge-reranker
+      dockerfile: Dockerfile
+    container_name: bge-reranker
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8092:8092"
+    environment:
+      PYTHONUNBUFFERED: "1"
+      BGE_RERANKER_MODEL: "/models/bge-reranker-v2-m3"
+      BGE_RERANKER_DEVICE: "cpu"
+    volumes:
+      - type: bind
+        source: ${HOME}/models/rerankers/bge-rerankers
+        target: /models/bge-reranker-v2-m3
+        read_only: true
+      - type: bind
+        source: ${HOME}/cache/huggingface
+        target: /root/.cache/huggingface
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8092/healthz', timeout=5)"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  search-retrieval:
+    build:
+      context: ${HOME}/workspace/search-retrieval
+      dockerfile: Dockerfile
+    container_name: search-retrieval
+    restart: unless-stopped
+    depends_on:
+      crawl4ai:
+        condition: service_healthy
+      bge-reranker:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8091:8091"
+    environment:
+      PYTHONUNBUFFERED: "1"
+      BRAVE_SEARCH_API_KEY: ${BRAVE_SEARCH_API_KEY}
+      CRAWL4AI_URL: "http://crawl4ai:11235"
+      CRAWL4AI_API_TOKEN: ${CRAWL4AI_API_TOKEN:-local-search-crawl4ai}
+      RERANKER_URL: "http://bge-reranker:8092"
+      RETRIEVAL_TIMEOUT_SECONDS: "60"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8091/healthz', timeout=5)"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
 
   policy-eval:
     build:

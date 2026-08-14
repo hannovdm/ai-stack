@@ -35,6 +35,12 @@ flowchart TD
         FoundryLocal["Foundry Local<br/>(REST API)<br/>:8100"]
     end
 
+    subgraph Research["Local Web Research"]
+        Retrieval["Search Retrieval<br/>(Brave orchestration)<br/>:8091"]
+        Crawl4AI["Crawl4AI<br/>(page extraction)<br/>:11235"]
+        BGEReranker["BGE Reranker v2-m3<br/>(CPU cross-encoder)<br/>:8092"]
+    end
+
     subgraph Databases["Databases"]
         PostgreSQL["PostgreSQL<br/>(persistent data)<br/>:5432"]
         Redis["Redis<br/>(caching · sessions)<br/>:6379"]
@@ -52,6 +58,10 @@ flowchart TD
     LangGraph --> Policy
     Policy --> LiteLLM
     MCP --> LangGraph
+    MCP --> Retrieval
+    Retrieval -->|search| Brave["Brave Search API"]
+    Retrieval --> Crawl4AI
+    Retrieval --> BGEReranker
     Client --> MCP
     FoundryLocal --> LiteLLM
     FoundryLocal --> PostgreSQL
@@ -82,7 +92,7 @@ flowchart TD
     class Q30 gpu0;
     class Q7,QEmb,QGen gpu1;
     class Flux comfy;
-    class LangGraph,Policy,MCP,FoundryLocal orch;
+    class LangGraph,Policy,MCP,FoundryLocal,Retrieval,Crawl4AI,BGEReranker orch;
     class PostgreSQL,Redis db;
 
     %% subgraph container tints (warm)
@@ -90,11 +100,68 @@ flowchart TD
     style GPU0 fill:#fff6e6,stroke:#eecf94,color:#6b4a00,stroke-width:2px;
     style GPU1 fill:#fdeadd,stroke:#e8b48c,color:#6b3c14,stroke-width:2px;
     style Orchestration fill:#fff0e8,stroke:#f0b79a,color:#7a3a1c,stroke-width:2px;
+    style Research fill:#fff0e8,stroke:#f0b79a,color:#7a3a1c,stroke-width:2px;
     style Databases fill:#fbf1d9,stroke:#e6cd8f,color:#5c4400,stroke-width:2px;
 
     %% thick connector lines for visibility
     linkStyle default stroke:#c26a33,stroke-width:2.5px;
 ```
+
+## Web Research Flow
+
+The local web research pipeline runs in this sequence:
+
+1. Brave search
+2. Crawl4AI fetch/extract for each result
+3. text chunking
+4. BGE rerank
+5. return ranked passages back to the app
+
+This is the flow used by the search-retrieval service in [workspace/search-retrieval/server.py](workspace/search-retrieval/server.py) and the reranker in [workspace/bge-reranker/server.py](workspace/bge-reranker/server.py).
+
+### 1) Brave Search: sources
+The process starts with Brave Search, which returns candidate web pages. Each result becomes a source record with metadata such as:
+
+- title
+- URL
+- description
+- published date
+
+These source items are the web pages the system is willing to investigate. They are not the final answer yet; they are the raw candidates discovered by the search engine.
+
+### 2) Crawl4AI fetch/extract: page content
+For each source, the system calls Crawl4AI to fetch and extract page text. Crawl4AI removes boilerplate and extracts readable markdown/text from the page. At this stage, the app has page content, but not yet a clean, tightly scoped retrieval unit.
+
+### 3) Chunking: passages
+The extracted page text is then split into smaller, more manageable text blocks called chunks or passages. A chunk is a section of a page that fits within a bounded size and is easier for a retrieval/reranking model to evaluate. Each chunk keeps metadata like:
+
+- source title
+- source URL
+- heading (when available)
+- text content
+- publication time
+
+These chunks are the actual retrieval candidates that will later be ranked for relevance.
+
+### 4) BGE rerank: relevance scoring
+The search-retrieval service sends the query together with all candidate chunks to the BGE reranker. The reranker is a cross-encoder model that scores each query/chunk pair. In other words, it answers: "How relevant is this chunk to the user query?"
+
+The reranker then sorts by score and keeps the most relevant ones at the top. The result is a final ranked list of passages, not a flat list of source pages. The score is the relevancy estimate that decides which evidence should be surfaced first.
+
+### 5) Return to the app
+Once the passages are reranked, the result is returned to the application as a final research response with:
+
+- the original query
+- the ranked passages
+- the source list that produced them
+- any crawl failures or warnings
+
+In summary:
+
+- sources = pages discovered by search
+- chunks/passages = text slices extracted from those pages
+- reranking = reordering chunks by relevance to the query
+- final output = the highest-quality evidence returned to the app
 
 ## Directory Structure
 
@@ -224,6 +291,14 @@ flowchart TD
     │   ├── Dockerfile
     │   ├── requirements.txt
     │   └── server.py               # FastMCP, port 9000
+    ├── search-retrieval/           # Brave → Crawl4AI → BGE orchestration
+    │   ├── Dockerfile
+    │   ├── requirements.txt
+    │   └── server.py               # FastAPI, port 8091
+    ├── bge-reranker/               # Local cross-encoder inference service
+    │   ├── Dockerfile
+    │   ├── requirements.txt
+    │   └── server.py               # FastAPI, port 8092
     ├── orchestrator/               # LangGraph orchestration service
     │   ├── Dockerfile
     │   ├── requirements.txt
@@ -247,7 +322,10 @@ flowchart TD
 | vLLM GPU 1 | 8003 | Qwen3-8B — general chat |
 | LangGraph orchestrator | 8080 | SpecKit pipeline execution |
 | Policy eval | 8090 | LLM-based policy / code review |
+| Search retrieval | 8091 | Brave discovery, Crawl4AI extraction, BGE reranking |
+| BGE reranker | 8092 | Local `BAAI/bge-reranker-v2-m3` cross-encoder |
 | MCP gateway | 9000 | MCP tool server for VS Code / agents |
+| Crawl4AI | 11235 | Authenticated browser extraction API |
 | Foundry Local | 8100 | REST API for Foundry Local functionality |
 | Langfuse | 3001 | LLM tracing and observability |
 | Grafana | 3000 | Metrics dashboards |
@@ -270,13 +348,16 @@ flowchart TD
 | `vscode.autocomplete` | Qwen2.5-Coder-7B | 1 | 8K | Fast inline FIM completions |
 | `azure.iac` | Qwen3-Coder-30B | 0 | 32K | Bicep / Terraform / AVM |
 | `azure.deploy.review` | Qwen3-Coder-30B | 0 | 32K | Deployment readiness review |
-| `general.chat` | Qwen3-8B | 1 | 4K | General assistant, summarisation |
+| `general.chat` | Qwen3-8B | 1 | 4K | General assistant, summarisation, approved web research |
 | `office.assist` | Qwen3-8B | 1 | 4K | O365 helper workflows |
 | `embeddings` | Qwen3-Embedding-4B | 1 | — | RAG, repo indexing |
 
 ## Quick Start
 
 ```bash
+# Export variables such as BRAVE_SEARCH_API_KEY from the local env file
+set -a; source ~/env/base.env; set +a
+
 # Start the full stack
 docker compose -f ~/runtime/compose/full/docker-compose.yml up -d
 
@@ -304,7 +385,28 @@ MCP gateway (`settings.json`):
 ```json
 "mcp": {
   "servers": {
-    "local-ai-speckit": { "type": "http", "url": "http://localhost:9000/mcp" }
+        "local-ai-speckit": {
+            "type": "http",
+            "url": "http://localhost:9000/mcp",
+            "headers": { "Authorization": "Bearer <LITELLM_API_KEY>" }
+        }
   }
 }
 ```
+
+The local chat's master-key field authenticates both LiteLLM and the MCP gateway;
+the key is not embedded in the HTML or persisted by the page. The MCP gateway exposes
+`web_research`, which accepts a query and optional source,
+passage, freshness, country, and language limits. It returns reranked passages with
+source URLs and crawl timestamps. The local chat uses this tool for current web
+information and treats crawled page text as untrusted evidence. The local chat attaches
+`web_research` only to `general.chat`; all other model requests omit external tool
+definitions. The legacy `web_search` and `current_weather` MCP tools and routes have been
+removed.
+
+The gateway is published only on `127.0.0.1:9000`, requires bearer authentication,
+and permits browser requests only from the local file origin or configured localhost
+origins. Every external search first returns a five-minute, one-time approval challenge
+bound to the exact query. The local chat displays that query for explicit approval;
+models cannot approve challenges through MCP. Queries containing credential patterns,
+private keys, or local filesystem paths are rejected before any external request.

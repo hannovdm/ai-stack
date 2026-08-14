@@ -1,0 +1,9 @@
+{
+  "devDependencies": {
+    "playwright": "^1.62.1"
+  },
+  "dependencies": {
+    "nodejs": "^0.0.0",
+    "nvm": "^0.0.4"
+  }
+}

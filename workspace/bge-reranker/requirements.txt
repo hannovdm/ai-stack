@@ -1,0 +1,4 @@
+fastapi>=0.111,<1
+transformers>=4.44,<6
+sentencepiece>=0.1.99,<0.2
+uvicorn[standard]>=0.30,<1

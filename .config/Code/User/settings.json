@@ -15,10 +15,21 @@
   // Exposes the local SpecKit LangGraph workflow as Copilot Chat tools.
   // The mcp-gateway Docker service must be running (docker compose up mcp-gateway).
   "mcp": {
+    "inputs": [
+      {
+        "type": "promptString",
+        "id": "local-ai-master-key",
+        "description": "LiteLLM master key for the local MCP gateway",
+        "password": true
+      }
+    ],
     "servers": {
       "local-ai-speckit": {
         "type": "http",
-        "url": "http://localhost:9000/mcp"
+        "url": "http://localhost:9000/mcp",
+        "headers": {
+          "Authorization": "Bearer ${input:local-ai-master-key}"
+        }
       }
     }
   }

@@ -12,8 +12,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Expose port
-EXPOSE 8100
+# Expose ports: 8100 REST API, 30000 UI access
+EXPOSE 8100 30000
 
 # Health check using a simple HTTP check with a longer start period
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \

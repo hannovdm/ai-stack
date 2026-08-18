@@ -18,7 +18,7 @@ flowchart TD
     end
 
     subgraph GPU0["vLLM · GPU 0"]
-        Q30["Qwen3-Coder-30B · 32K<br/>speckit.* · vscode.chat<br/>vscode.debug · azure.*"]
+        Q30["Qwen3.8-27B NVFP4 · 32K<br/>speckit.* · vscode.chat<br/>vscode.debug · azure.*"]
     end
 
     subgraph GPU1["vLLM + Diffusion · GPU 1"]
@@ -242,7 +242,7 @@ In summary:
 │   │   ├── glm/
 │   │   ├── llama/
 │   │   ├── qwen-coder-fast/        # Qwen2.5-Coder-7B  (GPU1 · fast chat + FIM)
-│   │   ├── qwen3-coder-30b-a3b/    # Qwen3-Coder-30B-A3B AWQ (GPU0 · primary coding)
+│   │   ├── qwen3.8-27b-nvfp4/      # Qwen3.8-27B NVFP4 (GPU0 · primary coding)
 │   │   └── qwen3-general/          # Qwen3-8B          (GPU1 · general chat)
 │   └── rerankers/
 │       └── bge-rerankers/          # BGE cross-encoder rerankers
@@ -253,7 +253,7 @@ In summary:
 │   │   ├── dev/                    # Lightweight profile (no GPU)
 │   │   └── gpu/                    # GPU-only vLLM services
 │   ├── gpu/
-│   │   ├── gpu0/                   # GPU 0 startup / config (Qwen3-Coder-30B)
+│   │   ├── gpu0/                   # GPU 0 startup / config (Qwen3.8-27B)
 │   │   └── gpu1/                   # GPU 1 startup / config (fast models)
 │   ├── services/                   # Per-service Dockerfiles / overrides
 │   │   ├── foundry-local/
@@ -316,7 +316,7 @@ In summary:
 | Service | Port | Purpose |
 |---|---|---|
 | LiteLLM proxy | 4000 | Model routing, auth, rate limiting, usage tracking |
-| vLLM GPU 0 | 8000 | Qwen3-Coder-30B — speckit, vscode.chat, azure IaC |
+| vLLM GPU 0 | 8000 | Qwen3.8-27B NVFP4 — speckit, vscode.chat, azure IaC |
 | vLLM GPU 1 | 8001 | Qwen2.5-Coder-7B — fast chat + FIM autocomplete |
 | vLLM GPU 1 | 8002 | Qwen3-Embedding-4B — semantic search / RAG |
 | vLLM GPU 1 | 8003 | Qwen3-8B — general chat |
@@ -337,17 +337,20 @@ In summary:
 
 | Alias | Backend | GPU | Context | Purpose |
 |---|---|---|---|---|
-| `speckit.discover` | Qwen3-Coder-30B | 0 | 32K | Repo scan, architecture intake |
-| `speckit.specify` | Qwen3-Coder-30B | 0 | 32K | Requirements authoring |
-| `speckit.plan` | Qwen3-Coder-30B | 0 | 32K | Architecture and implementation planning |
-| `speckit.tasks` | Qwen3-Coder-30B | 0 | 32K | Task breakdown |
-| `speckit.implement` | Qwen3-Coder-30B | 0 | 32K | Code generation |
-| `speckit.validate` | Qwen3-Coder-30B | 0 | 32K | Code review, policy validation |
-| `vscode.chat` | Qwen3-Coder-30B | 0 | 32K | VS Code Copilot chat (high quality) |
-| `vscode.debug` | Qwen3-Coder-30B | 0 | 32K | Debugging, stack trace analysis |
+| `speckit.discover` | Qwen3.8-27B | 0 | 32K | Repo scan, architecture intake |
+| `speckit.specify` | Qwen3.8-27B | 0 | 32K | Requirements authoring |
+| `speckit.plan` | Qwen3.8-27B | 0 | 32K | Architecture and implementation planning |
+| `speckit.tasks` | Qwen3.8-27B | 0 | 32K | Task breakdown |
+| `speckit.implement` | Qwen3.8-27B | 0 | 32K | Code generation |
+| `speckit.validate` | Qwen3.8-27B | 0 | 32K | Code review, policy validation |
+| `vscode.chat` | Qwen3.8-27B | 0 | 32K | VS Code Copilot chat (high quality) |
+| `vscode.chat.low` | Qwen3.8-27B | 0 | 32K | VS Code Copilot chat (low reasoning) |
+| `vscode.chat.medium` | Qwen3.8-27B | 0 | 32K | VS Code Copilot chat (medium reasoning) |
+| `vscode.chat.xhigh` | Qwen3.8-27B | 0 | 32K | VS Code Copilot chat (extra-high reasoning) |
+| `vscode.debug` | Qwen3.8-27B | 0 | 32K | Debugging, stack trace analysis |
 | `vscode.autocomplete` | Qwen2.5-Coder-7B | 1 | 8K | Fast inline FIM completions |
-| `azure.iac` | Qwen3-Coder-30B | 0 | 32K | Bicep / Terraform / AVM |
-| `azure.deploy.review` | Qwen3-Coder-30B | 0 | 32K | Deployment readiness review |
+| `azure.iac` | Qwen3.8-27B | 0 | 32K | Bicep / Terraform / AVM |
+| `azure.deploy.review` | Qwen3.8-27B | 0 | 32K | Deployment readiness review |
 | `general.chat` | Qwen3-8B | 1 | 4K | General assistant, summarisation, approved web research |
 | `office.assist` | Qwen3-8B | 1 | 4K | O365 helper workflows |
 | `embeddings` | Qwen3-Embedding-4B | 1 | — | RAG, repo indexing |
@@ -373,8 +376,13 @@ bash ~/tools/cli/download-models.sh
 
 ## VS Code Integration
 
-VS Code reads model configuration from the **Windows** settings file:
+In a Remote - WSL window, the chat UI still runs on the Windows extension host and
+reads model configuration from the **Windows** settings file:
 `C:\Users\hanno\AppData\Roaming\Code\User\chatLanguageModels.json`
+
+This catalog is explicit rather than populated from LiteLLM's `/v1/models` response.
+Keep its model IDs and display names aligned with `config/litellm/litellm.config.yaml`,
+then run **Developer: Reload Window** after changing it.
 
 LiteLLM requires an API key (the master key enables the admin UI). Add it once in
 VS Code via **Command Palette → "GitHub Copilot: Manage Models"** → the

@@ -157,38 +157,31 @@ services:
       - "8000:8000"
     command:
       - "--model"
-      # Real Qwen3-Coder-30B-A3B-Instruct (Qwen3MoeForCausalLM) AWQ 4-bit.
-      # Replaces the misnamed Qwen2.5-Coder-32B that previously lived under
-      # foundation/qwen3-coder-30b and could not emit <tool_call> tags in
-      # auto mode under bitsandbytes INT4.
-      - "/models/foundation/qwen3-coder-30b-a3b"
+      # NVFP4 is required to fit the dense Qwen3.8-27B model on one 32 GB GPU.
+      - "/models/foundation/qwen3.8-27b-nvfp4"
       - "--served-model-name"
-      - "qwen3-coder-30b"
+      - "qwen3.8-27b"
       - "--host"
       - "0.0.0.0"
       - "--port"
       - "8000"
       - "--gpu-memory-utilization"
-      - "0.92"
+      - "0.94"
+      - "--cpu-offload-gb"
+      - "2"
       - "--max-model-len"
-      # AWQ weights ~16.8 GiB on 31.84 GiB GPU leaves ample KV cache. The model
-      # natively supports 256K context. The KV-cache pool is sized by
-      # gpu-memory-utilization (0.92) at startup, so raising max-model-len does
-      # NOT consume extra GPU memory - it only lifts the per-request cap within
-      # that already-reserved pool. 64K gives generous headroom over the VS Code
-      # token budget and eliminates the off-by-one 32768 overflow (a single 64K
-      # sequence needs ~6 GiB KV, well within the ~13 GiB pool after weights).
-      - "65536"
-      - "--quantization"
-      # AWQ-Marlin kernels for the GEMM AWQ checkpoint (auto-detected from
-      # config.json, set explicitly to ensure the fast Marlin path).
-      - "awq_marlin"
+      # The verified single-RTX-5090 profile uses 32K context and FP8 KV cache.
+      - "32768"
+      - "--kv-cache-dtype"
+      - "fp8"
       - "--enforce-eager"
+      - "--language-model-only"
+      - "--max-num-seqs"
+      - "8"
+      - "--reasoning-parser"
+      - "qwen3"
       - "--enable-auto-tool-choice"
       - "--tool-call-parser"
-      # qwen3_coder is the correct parser for genuine Qwen3-Coder models: their
-      # chat template emits <tool_call>{json}</tool_call> and this checkpoint
-      # follows it reliably (unlike the old INT4 Qwen2.5 that dropped the tags).
       - "qwen3_coder"
       - "--download-dir"
       - "/root/.cache/huggingface"

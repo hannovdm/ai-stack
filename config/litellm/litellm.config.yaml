@@ -7,11 +7,17 @@ model_list:
 
 - model_name: speckit.discover
   litellm_params:
-    model: hosted_vllm/qwen3-coder-30b
+    model: hosted_vllm/qwen3.8-27b
+    reasoning_effort: medium
     api_base: http://vllm-qwen3-coder-gpu0:8000/v1
     api_key: os.environ/VLLM_API_KEY
     request_timeout: 300
-    temperature: 0.2
+    temperature: 1.0
+    top_p: 0.95
+    top_k: 20
+    min_p: 0.0
+    presence_penalty: 0.0
+    repetition_penalty: 1.0
     max_tokens: 4096
   model_info:
     mode: chat
@@ -22,11 +28,17 @@ model_list:
 
 - model_name: speckit.specify
   litellm_params:
-    model: hosted_vllm/qwen3-coder-30b
+    model: hosted_vllm/qwen3.8-27b
+    reasoning_effort: medium
     api_base: http://vllm-qwen3-coder-gpu0:8000/v1
     api_key: os.environ/VLLM_API_KEY
     request_timeout: 300
-    temperature: 0.15
+    temperature: 1.0
+    top_p: 0.95
+    top_k: 20
+    min_p: 0.0
+    presence_penalty: 0.0
+    repetition_penalty: 1.0
     max_tokens: 8192
   model_info:
     mode: chat
@@ -35,11 +47,16 @@ model_list:
 
 - model_name: speckit.plan
   litellm_params:
-    model: hosted_vllm/qwen3-coder-30b
+    model: hosted_vllm/qwen3.8-27b
     api_base: http://vllm-qwen3-coder-gpu0:8000/v1
     api_key: os.environ/VLLM_API_KEY
     request_timeout: 300
-    temperature: 0.2
+    temperature: 1.0
+    top_p: 0.95
+    top_k: 20
+    min_p: 0.0
+    presence_penalty: 0.0
+    repetition_penalty: 1.0
     max_tokens: 8192
   model_info:
     mode: chat
@@ -48,11 +65,17 @@ model_list:
 
 - model_name: speckit.tasks
   litellm_params:
-    model: hosted_vllm/qwen3-coder-30b
+    model: hosted_vllm/qwen3.8-27b
+    reasoning_effort: medium
     api_base: http://vllm-qwen3-coder-gpu0:8000/v1
     api_key: os.environ/VLLM_API_KEY
     request_timeout: 300
-    temperature: 0.15
+    temperature: 1.0
+    top_p: 0.95
+    top_k: 20
+    min_p: 0.0
+    presence_penalty: 0.0
+    repetition_penalty: 1.0
     max_tokens: 8192
   model_info:
     mode: chat
@@ -61,11 +84,17 @@ model_list:
 
 - model_name: speckit.implement
   litellm_params:
-    model: hosted_vllm/qwen3-coder-30b
+    model: hosted_vllm/qwen3.8-27b
+    reasoning_effort: medium
     api_base: http://vllm-qwen3-coder-gpu0:8000/v1
     api_key: os.environ/VLLM_API_KEY
     request_timeout: 600
-    temperature: 0.1
+    temperature: 1.0
+    top_p: 0.95
+    top_k: 20
+    min_p: 0.0
+    presence_penalty: 0.0
+    repetition_penalty: 1.0
     max_tokens: 12000
   model_info:
     mode: chat
@@ -74,11 +103,17 @@ model_list:
 
 - model_name: speckit.validate
   litellm_params:
-    model: hosted_vllm/qwen3-coder-30b
+    model: hosted_vllm/qwen3.8-27b
+    reasoning_effort: medium
     api_base: http://vllm-qwen3-coder-gpu0:8000/v1
     api_key: os.environ/VLLM_API_KEY
     request_timeout: 300
-    temperature: 0.05
+    temperature: 1.0
+    top_p: 0.95
+    top_k: 20
+    min_p: 0.0
+    presence_penalty: 0.0
+    repetition_penalty: 1.0
     max_tokens: 8192
   model_info:
     mode: chat
@@ -87,11 +122,17 @@ model_list:
 
 - model_name: vscode.chat
   litellm_params:
-    model: hosted_vllm/qwen3-coder-30b
+    model: hosted_vllm/qwen3.8-27b
+    reasoning_effort: medium
     api_base: http://vllm-qwen3-coder-gpu0:8000/v1
     api_key: os.environ/VLLM_API_KEY
     request_timeout: 300
-    temperature: 0.15
+    temperature: 1.0
+    top_p: 0.95
+    top_k: 20
+    min_p: 0.0
+    presence_penalty: 0.0
+    repetition_penalty: 1.0
     max_tokens: 4000  # backend max-model-len is 64K; 28K+ input + 4K output fits comfortably
   model_info:
     mode: chat
@@ -99,13 +140,79 @@ model_list:
     gpu: "0"
     purpose: "VS Code coding assistant chat"
 
-- model_name: vscode.debug
+- model_name: vscode.chat.low
   litellm_params:
-    model: hosted_vllm/qwen3-coder-30b
+    model: hosted_vllm/qwen3.8-27b
+    reasoning_effort: low
     api_base: http://vllm-qwen3-coder-gpu0:8000/v1
     api_key: os.environ/VLLM_API_KEY
     request_timeout: 300
-    temperature: 0.05
+    temperature: 1.0
+    top_p: 0.95
+    top_k: 20
+    min_p: 0.0
+    presence_penalty: 0.0
+    repetition_penalty: 1.0
+    max_tokens: 4000
+  model_info:
+    mode: chat
+    supports_function_calling: true
+    gpu: "0"
+    purpose: "VS Code coding assistant chat with low reasoning effort"
+
+- model_name: vscode.chat.medium
+  litellm_params:
+    model: hosted_vllm/qwen3.8-27b
+    reasoning_effort: medium
+    api_base: http://vllm-qwen3-coder-gpu0:8000/v1
+    api_key: os.environ/VLLM_API_KEY
+    request_timeout: 300
+    temperature: 1.0
+    top_p: 0.95
+    top_k: 20
+    min_p: 0.0
+    presence_penalty: 0.0
+    repetition_penalty: 1.0
+    max_tokens: 4000
+  model_info:
+    mode: chat
+    supports_function_calling: true
+    gpu: "0"
+    purpose: "VS Code coding assistant chat with medium reasoning effort"
+
+- model_name: vscode.chat.xhigh
+  litellm_params:
+    model: hosted_vllm/qwen3.8-27b
+    reasoning_effort: xhigh
+    api_base: http://vllm-qwen3-coder-gpu0:8000/v1
+    api_key: os.environ/VLLM_API_KEY
+    request_timeout: 300
+    temperature: 1.0
+    top_p: 0.95
+    top_k: 20
+    min_p: 0.0
+    presence_penalty: 0.0
+    repetition_penalty: 1.0
+    max_tokens: 4000
+  model_info:
+    mode: chat
+    supports_function_calling: true
+    gpu: "0"
+    purpose: "VS Code coding assistant chat with extra-high reasoning effort"
+
+- model_name: vscode.debug
+  litellm_params:
+    model: hosted_vllm/qwen3.8-27b
+    reasoning_effort: medium
+    api_base: http://vllm-qwen3-coder-gpu0:8000/v1
+    api_key: os.environ/VLLM_API_KEY
+    request_timeout: 300
+    temperature: 1.0
+    top_p: 0.95
+    top_k: 20
+    min_p: 0.0
+    presence_penalty: 0.0
+    repetition_penalty: 1.0
     max_tokens: 4000  # hard cap; 28000 input + 4000 output = 32000 < 32768
   model_info:
     mode: chat
@@ -115,11 +222,17 @@ model_list:
 
 - model_name: azure.iac
   litellm_params:
-    model: hosted_vllm/qwen3-coder-30b
+    model: hosted_vllm/qwen3.8-27b
+    reasoning_effort: medium
     api_base: http://vllm-qwen3-coder-gpu0:8000/v1
     api_key: os.environ/VLLM_API_KEY
     request_timeout: 300
-    temperature: 0.1
+    temperature: 1.0
+    top_p: 0.95
+    top_k: 20
+    min_p: 0.0
+    presence_penalty: 0.0
+    repetition_penalty: 1.0
     max_tokens: 4000  # hard cap; 28000 input + 4000 output = 32000 < 32768
   model_info:
     mode: chat
@@ -128,11 +241,17 @@ model_list:
 
 - model_name: azure.deploy.review
   litellm_params:
-    model: hosted_vllm/qwen3-coder-30b
+    model: hosted_vllm/qwen3.8-27b
+    reasoning_effort: medium
     api_base: http://vllm-qwen3-coder-gpu0:8000/v1
     api_key: os.environ/VLLM_API_KEY
     request_timeout: 300
-    temperature: 0.05
+    temperature: 1.0
+    top_p: 0.95
+    top_k: 20
+    min_p: 0.0
+    presence_penalty: 0.0
+    repetition_penalty: 1.0
     max_tokens: 4000  # hard cap; 28000 input + 4000 output = 32000 < 32768
   model_info:
     mode: chat
@@ -195,16 +314,22 @@ model_list:
 
 - model_name: flux.kontext.dev
   litellm_params:
-    model: hosted_vllm/qwen3-coder-30b
-    api_base: http://vllm-qwen3-coder-gpu1:8000/v1
+    model: hosted_vllm/qwen3.8-27b
+    reasoning_effort: medium
+    api_base: http://vllm-qwen3-coder-gpu0:8000/v1
     api_key: os.environ/VLLM_API_KEY
     request_timeout: 300
-    temperature: 0.2
+    temperature: 1.0
+    top_p: 0.95
+    top_k: 20
+    min_p: 0.0
+    presence_penalty: 0.0
+    repetition_penalty: 1.0
     max_tokens: 4096
   model_info:
     mode: chat
-    gpu: "1"
-    purpose: "FLUX Kontext Dev model for GPU 1"
+    gpu: "0"
+    purpose: "FLUX Kontext workflow assistant"
 
 # ---------------------------------------------------------------------------
 # Friendly catch-all aliases

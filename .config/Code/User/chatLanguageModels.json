@@ -5,8 +5,26 @@
         "apiType": "chat-completions",
         "models": [
             {
-                "id": "vscode.chat",
-                "name": "VS Code Chat  (Qwen3-Coder-30B · GPU0 · 32K)",
+                "id": "vscode.chat.low",
+                "name": "VS Code Chat Low  (Qwen3.8-27B · GPU0 · 32K)",
+                "url": "http://localhost:4000",
+                "toolCalling": false,
+                "vision": false,
+                "maxInputTokens": 28000,
+                "maxOutputTokens": 4000
+            },
+            {
+                "id": "vscode.chat.medium",
+                "name": "VS Code Chat Medium  (Qwen3.8-27B · GPU0 · 32K)",
+                "url": "http://localhost:4000",
+                "toolCalling": false,
+                "vision": false,
+                "maxInputTokens": 28000,
+                "maxOutputTokens": 4000
+            },
+            {
+                "id": "vscode.chat.xhigh",
+                "name": "VS Code Chat XHigh  (Qwen3.8-27B · GPU0 · 32K)",
                 "url": "http://localhost:4000",
                 "toolCalling": false,
                 "vision": false,
@@ -15,7 +33,7 @@
             },
             {
                 "id": "vscode.debug",
-                "name": "VS Code Debug  (Qwen3-Coder-30B · GPU0 · 32K)",
+                "name": "VS Code Debug  (Qwen3.8-27B · GPU0 · 32K)",
                 "url": "http://localhost:4000",
                 "toolCalling": false,
                 "vision": false,
@@ -24,7 +42,7 @@
             },
             {
                 "id": "azure.iac",
-                "name": "Azure IaC  (Qwen3-Coder-30B · GPU0 · 32K)",
+                "name": "Azure IaC  (Qwen3.8-27B · GPU0 · 32K)",
                 "url": "http://localhost:4000",
                 "toolCalling": false,
                 "vision": false,
@@ -33,7 +51,7 @@
             },
             {
                 "id": "azure.deploy.review",
-                "name": "Azure Deploy Review  (Qwen3-Coder-30B · GPU0 · 32K)",
+                "name": "Azure Deploy Review  (Qwen3.8-27B · GPU0 · 32K)",
                 "url": "http://localhost:4000",
                 "toolCalling": false,
                 "vision": false,
@@ -66,15 +84,6 @@
                 "vision": false,
                 "maxInputTokens": 2000,
                 "maxOutputTokens": 1800
-            },
-            {
-                "id": "",
-                "name": "",
-                "url": "",
-                "toolCalling": true,
-                "vision": true,
-                "maxInputTokens": 128000,
-                "maxOutputTokens": 16000
             }
         ]
     }

@@ -126,14 +126,14 @@ model_list:
     reasoning_effort: medium
     api_base: http://vllm-qwen3-coder-gpu0:8000/v1
     api_key: os.environ/VLLM_API_KEY
-    request_timeout: 300
+    request_timeout: 600
     temperature: 1.0
     top_p: 0.95
     top_k: 20
     min_p: 0.0
     presence_penalty: 0.0
     repetition_penalty: 1.0
-    max_tokens: 4000  # backend max-model-len is 64K; 28K+ input + 4K output fits comfortably
+    max_tokens: 3500  # reserve headroom within the backend's 32768-token context
   model_info:
     mode: chat
     supports_function_calling: true
@@ -146,14 +146,14 @@ model_list:
     reasoning_effort: low
     api_base: http://vllm-qwen3-coder-gpu0:8000/v1
     api_key: os.environ/VLLM_API_KEY
-    request_timeout: 300
+    request_timeout: 600
     temperature: 1.0
     top_p: 0.95
     top_k: 20
     min_p: 0.0
     presence_penalty: 0.0
     repetition_penalty: 1.0
-    max_tokens: 4000
+    max_tokens: 3500  # reserve headroom within the backend's 32768-token context
   model_info:
     mode: chat
     supports_function_calling: true
@@ -166,14 +166,14 @@ model_list:
     reasoning_effort: medium
     api_base: http://vllm-qwen3-coder-gpu0:8000/v1
     api_key: os.environ/VLLM_API_KEY
-    request_timeout: 300
+    request_timeout: 600
     temperature: 1.0
     top_p: 0.95
     top_k: 20
     min_p: 0.0
     presence_penalty: 0.0
     repetition_penalty: 1.0
-    max_tokens: 4000
+    max_tokens: 3500  # reserve headroom within the backend's 32768-token context
   model_info:
     mode: chat
     supports_function_calling: true
@@ -186,14 +186,14 @@ model_list:
     reasoning_effort: xhigh
     api_base: http://vllm-qwen3-coder-gpu0:8000/v1
     api_key: os.environ/VLLM_API_KEY
-    request_timeout: 300
+    request_timeout: 600
     temperature: 1.0
     top_p: 0.95
     top_k: 20
     min_p: 0.0
     presence_penalty: 0.0
     repetition_penalty: 1.0
-    max_tokens: 4000
+    max_tokens: 3500  # reserve headroom within the backend's 32768-token context
   model_info:
     mode: chat
     supports_function_calling: true
@@ -206,14 +206,14 @@ model_list:
     reasoning_effort: medium
     api_base: http://vllm-qwen3-coder-gpu0:8000/v1
     api_key: os.environ/VLLM_API_KEY
-    request_timeout: 300
+    request_timeout: 600
     temperature: 1.0
     top_p: 0.95
     top_k: 20
     min_p: 0.0
     presence_penalty: 0.0
     repetition_penalty: 1.0
-    max_tokens: 4000  # hard cap; 28000 input + 4000 output = 32000 < 32768
+    max_tokens: 3500  # reserve headroom within the backend's 32768-token context
   model_info:
     mode: chat
     supports_function_calling: true
@@ -226,14 +226,14 @@ model_list:
     reasoning_effort: medium
     api_base: http://vllm-qwen3-coder-gpu0:8000/v1
     api_key: os.environ/VLLM_API_KEY
-    request_timeout: 300
+    request_timeout: 600
     temperature: 1.0
     top_p: 0.95
     top_k: 20
     min_p: 0.0
     presence_penalty: 0.0
     repetition_penalty: 1.0
-    max_tokens: 4000  # hard cap; 28000 input + 4000 output = 32000 < 32768
+    max_tokens: 3500  # reserve headroom within the backend's 32768-token context
   model_info:
     mode: chat
     gpu: "0"
@@ -245,14 +245,14 @@ model_list:
     reasoning_effort: medium
     api_base: http://vllm-qwen3-coder-gpu0:8000/v1
     api_key: os.environ/VLLM_API_KEY
-    request_timeout: 300
+    request_timeout: 600
     temperature: 1.0
     top_p: 0.95
     top_k: 20
     min_p: 0.0
     presence_penalty: 0.0
     repetition_penalty: 1.0
-    max_tokens: 4000  # hard cap; 28000 input + 4000 output = 32000 < 32768
+    max_tokens: 3500  # reserve headroom within the backend's 32768-token context
   model_info:
     mode: chat
     gpu: "0"
@@ -353,7 +353,7 @@ router_settings:
   redis_host: redis
   redis_port: 6379
   num_retries: 2
-  timeout: 300
+  timeout: 600
   cooldown_time: 30
 
 # Optional if you add duplicate deployments later.
@@ -373,7 +373,7 @@ litellm_settings:
   service_callback:
     - prometheus
   # Useful with OpenAI-compatible vLLM endpoints.
-  request_timeout: 300
+  request_timeout: 600
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY

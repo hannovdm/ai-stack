@@ -10,8 +10,8 @@
                 "url": "http://localhost:4000",
                 "toolCalling": false,
                 "vision": false,
-                "maxInputTokens": 28000,
-                "maxOutputTokens": 4000
+                "maxInputTokens": 24000,
+                "maxOutputTokens": 3500
             },
             {
                 "id": "vscode.chat.medium",
@@ -19,8 +19,8 @@
                 "url": "http://localhost:4000",
                 "toolCalling": false,
                 "vision": false,
-                "maxInputTokens": 28000,
-                "maxOutputTokens": 4000
+                "maxInputTokens": 24000,
+                "maxOutputTokens": 3500
             },
             {
                 "id": "vscode.chat.xhigh",
@@ -28,8 +28,8 @@
                 "url": "http://localhost:4000",
                 "toolCalling": false,
                 "vision": false,
-                "maxInputTokens": 28000,
-                "maxOutputTokens": 4000
+                "maxInputTokens": 24000,
+                "maxOutputTokens": 3500
             },
             {
                 "id": "vscode.debug",
@@ -37,8 +37,8 @@
                 "url": "http://localhost:4000",
                 "toolCalling": false,
                 "vision": false,
-                "maxInputTokens": 28000,
-                "maxOutputTokens": 4000
+                "maxInputTokens": 24000,
+                "maxOutputTokens": 3500
             },
             {
                 "id": "azure.iac",
@@ -46,8 +46,8 @@
                 "url": "http://localhost:4000",
                 "toolCalling": false,
                 "vision": false,
-                "maxInputTokens": 28000,
-                "maxOutputTokens": 4000
+                "maxInputTokens": 24000,
+                "maxOutputTokens": 3500
             },
             {
                 "id": "azure.deploy.review",
@@ -55,8 +55,8 @@
                 "url": "http://localhost:4000",
                 "toolCalling": false,
                 "vision": false,
-                "maxInputTokens": 28000,
-                "maxOutputTokens": 4000
+                "maxInputTokens": 24000,
+                "maxOutputTokens": 3500
             },
             {
                 "id": "general.chat",

@@ -5,107 +5,120 @@ A self-hosted, GPU-accelerated AI development environment running multiple LLMs 
 ## Architecture Overview
 
 ```mermaid
-flowchart TD
-    Client["VS Code / MCP Clients"]
-    Comfy["ComfyUI · Web UI<br/>(image edit / generation)<br/>:8188"]
-
-    subgraph Proxy["Routing & Observability"]
-        LiteLLM["LiteLLM Proxy<br/>(routing · auth · rate limiting)<br/>:4000"]
-        Langfuse["Langfuse<br/>(tracing)<br/>:3001"]
-        Prometheus["Prometheus<br/>(metrics collection)<br/>:9090"]
-        Grafana["Grafana<br/>(dashboards)<br/>:3000"]
-        DGCMExporter["DGCM Exporter<br/>(custom metrics)<br/>:9091"]
+%%{init: {"flowchart": {"defaultRenderer": "elk", "nodeSpacing": 30, "rankSpacing": 50}}}%%
+flowchart TB
+    subgraph Clients["Clients and user interfaces"]
+        VSCode["VS Code / AI agents<br/>chat, completion, MCP tools"]
+        WebChat["Local LiteLLM chat<br/>model picker, tool approval"]
+        ComfyClient["ComfyUI browser<br/>image generation and editing"]
     end
 
-    subgraph GPU0["vLLM · GPU 0"]
-        Q30["Qwen3.8-27B NVFP4 · 32K<br/>speckit.* · vscode.chat<br/>vscode.debug · azure.*"]
+    subgraph Control["Routing, orchestration, and policy"]
+        LiteLLM["LiteLLM proxy :4000<br/>OpenAI API, auth, model aliases<br/>routing, limits, usage tracking"]
+        MCP["MCP gateway :9000<br/>bearer auth, tool policy<br/>SpecKit tools, approved research"]
+        LangGraph["LangGraph :8080<br/>SpecKit workflow<br/>discover -> specify -> plan<br/>-> tasks -> implement -> validate"]
+        Policy["Policy eval :8090<br/>policy and OWASP review<br/>PASS / WARNING / FAIL report"]
+        Foundry["Foundry Local :8100 / :30000<br/>optional 'foundry' profile<br/>local REST API and UI"]
     end
 
-    subgraph GPU1["vLLM + Diffusion · GPU 1"]
-        Q7["Qwen2.5-Coder-7B · 8K<br/>vscode.autocomplete"]
-        QEmb["Qwen3-Embedding-4B<br/>embeddings"]
-        QGen["Qwen3-8B · 4K<br/>general.chat · office.assist"]
-        Flux["FLUX.1-Kontext-dev · bf16<br/>(diffusion image model)"]
+    subgraph Inference["GPU inference"]
+        subgraph GPU0["GPU 0"]
+            Coder["vLLM :8000<br/>Qwen3.8-27B NVFP4, 32K<br/>SpecKit, VS Code chat/debug<br/>Azure IaC and review"]
+        end
+        subgraph GPU1["GPU 1"]
+            Fast["vLLM :8001<br/>Qwen2.5-Coder-7B FP8, 8K<br/>low-latency autocomplete"]
+            Embed["vLLM :8002<br/>Qwen3-Embedding-4B, 4K<br/>RAG and semantic vectors"]
+            General["vLLM :8003<br/>Qwen3-8B FP8, 4K<br/>general chat and Office assist"]
+            Comfy["ComfyUI :8188<br/>optional 'flux' profile<br/>FLUX.1 Kontext dev, FP32 VAE"]
+        end
     end
 
-    subgraph Orchestration["Orchestration & Policy"]
-        LangGraph["LangGraph Orchestrator<br/>(speckit_graph pipeline)<br/>:8080"]
-        Policy["Policy Eval Service<br/>(LLM-based review)<br/>:8090"]
-        MCP["MCP Gateway<br/>(tool exposure over HTTP/MCP)<br/>:9000"]
-        FoundryLocal["Foundry Local<br/>(REST API)<br/>:8100"]
+    subgraph Research["Human-approved web research"]
+        Retrieval["Search retrieval :8091<br/>SSRF checks, crawl orchestration<br/>chunking and citation assembly"]
+        Crawl["Crawl4AI :11235<br/>headless fetch, robots checks<br/>clean Markdown extraction"]
+        Reranker["BGE reranker :8092<br/>bge-reranker-v2-m3 on CPU<br/>cross-encoder relevance scores"]
     end
 
-    subgraph Research["Local Web Research"]
-        Retrieval["Search Retrieval<br/>(Brave orchestration)<br/>:8091"]
-        Crawl4AI["Crawl4AI<br/>(page extraction)<br/>:11235"]
-        BGEReranker["BGE Reranker v2-m3<br/>(CPU cross-encoder)<br/>:8092"]
+    subgraph External["External services"]
+        Brave["Brave Search API<br/>web discovery"]
+        Web["Public web pages<br/>Brave-selected URLs only"]
     end
 
-    subgraph Databases["Databases"]
-        PostgreSQL["PostgreSQL<br/>(persistent data)<br/>:5432"]
-        Redis["Redis<br/>(caching · sessions)<br/>:6379"]
+    subgraph Data["State and durable data"]
+        Storage[("Persistent storage<br/>PostgreSQL :5432 - LiteLLM/Langfuse records<br/>Redis :6379 - cache and shared state<br/>artifacts - SpecKit Markdown outputs<br/>models - weights, HF cache, images")]
     end
 
-    Client --> LiteLLM
-    LiteLLM -.-> Langfuse
-    LiteLLM --> Q30
-    LiteLLM --> Q7
-    LiteLLM --> QEmb
-    LiteLLM --> QGen
-    Comfy --> Flux
-    
-    LangGraph --> LiteLLM
-    LangGraph --> Policy
-    Policy --> LiteLLM
-    MCP --> LangGraph
-    MCP --> Retrieval
-    Retrieval -->|search| Brave["Brave Search API"]
-    Retrieval --> Crawl4AI
-    Retrieval --> BGEReranker
-    Client --> MCP
-    FoundryLocal --> LiteLLM
-    FoundryLocal --> PostgreSQL
-    FoundryLocal --> Redis
-    LangGraph --> PostgreSQL
-    LangGraph --> Redis
-    Langfuse --> Redis
-    Policy --> PostgreSQL
-    Policy --> Redis
-    Prometheus --> Grafana
-    DGCMExporter --> Prometheus
-    Prometheus -.->|scrapes| FoundryLocal
-    Prometheus -.->|scrapes| LiteLLM
-    Prometheus -.->|scrapes| LangGraph
+    subgraph Observe["Observability"]
+        Telemetry["Observability stack<br/>Langfuse :3001 - LLM traces/generations<br/>Prometheus :9090 - 15s metrics and TSDB<br/>Grafana :3000 - provisioned dashboards<br/>Langfuse exporter :9420 - trace metrics<br/>DCGM exporter :9400 - GPU/VRAM metrics"]
+    end
 
-    %% ---- warm theme · bold text · thick borders ----
-    classDef client fill:#ffcaa8,stroke:#e07b42,color:#5a2600,stroke-width:3px,font-weight:bold;
-    classDef comfy fill:#ffd98a,stroke:#e0a12d,color:#5a3a00,stroke-width:3px,font-weight:bold;
-    classDef proxy fill:#ffe0c2,stroke:#e8965a,color:#5a2f10,stroke-width:3px,font-weight:bold;
-    classDef gpu0 fill:#ffe7ba,stroke:#e0b055,color:#513800,stroke-width:3px,font-weight:bold;
-    classDef gpu1 fill:#f7cdb0,stroke:#d98a55,color:#552d0c,stroke-width:3px,font-weight:bold;
-    classDef orch fill:#ffd7c2,stroke:#e89370,color:#5a2c14,stroke-width:3px,font-weight:bold;
-    classDef db fill:#f3dcae,stroke:#d6a94f,color:#4d3800,stroke-width:3px,font-weight:bold;
+    VSCode -->|"HTTPS /v1: prompts, code context, tool calls"| LiteLLM
+    WebChat -->|"HTTPS /v1: messages and model alias"| LiteLLM
+    VSCode -->|"Streamable HTTP MCP: tool JSON"| MCP
+    WebChat -->|"HTTP JSON: research request and approval"| MCP
+    VSCode -->|"HTTP: local model/API requests"| Foundry
+    ComfyClient -->|"HTTP/WebSocket: workflow JSON, images"| Comfy
 
-    class Client client;
-    class Comfy comfy;
-    class LiteLLM,Langfuse,Prometheus,Grafana,DGCMExporter proxy;
-    class Q30 gpu0;
-    class Q7,QEmb,QGen gpu1;
-    class Flux comfy;
-    class LangGraph,Policy,MCP,FoundryLocal,Retrieval,Crawl4AI,BGEReranker orch;
-    class PostgreSQL,Redis db;
+    MCP -->|"REST: feature request and SpecKit state"| LangGraph
+    MCP -->|"REST /research: query and limits; ranked passages and citations"| Retrieval
+    LangGraph -->|"OpenAI chat JSON: step prompts and artifacts"| LiteLLM
+    LangGraph -->|"REST /evaluate: implementation, spec, constitution"| Policy
+    Policy -->|"OpenAI chat JSON: policies and implementation"| LiteLLM
 
-    %% subgraph container tints (warm)
-    style Proxy fill:#fff3e8,stroke:#f0c39a,color:#7a3d16,stroke-width:2px;
-    style GPU0 fill:#fff6e6,stroke:#eecf94,color:#6b4a00,stroke-width:2px;
-    style GPU1 fill:#fdeadd,stroke:#e8b48c,color:#6b3c14,stroke-width:2px;
-    style Orchestration fill:#fff0e8,stroke:#f0b79a,color:#7a3a1c,stroke-width:2px;
-    style Research fill:#fff0e8,stroke:#f0b79a,color:#7a3a1c,stroke-width:2px;
-    style Databases fill:#fbf1d9,stroke:#e6cd8f,color:#5c4400,stroke-width:2px;
+    LiteLLM -->|"OpenAI chat/completions: coding aliases"| Coder
+    LiteLLM -->|"OpenAI completions: prefix/suffix code"| Fast
+    LiteLLM -->|"OpenAI embeddings: text -> vectors"| Embed
+    LiteLLM -->|"OpenAI chat/completions: general aliases"| General
 
-    %% thick connector lines for visibility
-    linkStyle default stroke:#c26a33,stroke-width:2.5px;
+    Retrieval -->|"HTTPS: query filters; JSON titles, URLs, snippets, dates"| Brave
+    Retrieval -->|"HTTP /crawl: URLs; JSON cleaned Markdown"| Crawl
+    Crawl -->|"HTTPS: page requests"| Web
+    Retrieval -->|"HTTP /rerank: query/passages; JSON indexes/scores"| Reranker
+
+    LiteLLM -->|"SQL records and Redis cache/rate limits"| Storage
+    LangGraph -->|"files: SpecKit workflow artifacts"| Storage
+    MCP -->|"files: artifact status and results"| Storage
+    Foundry -->|"files: model weights and build artifacts"| Storage
+    Comfy -->|"files: checkpoints, workflows, PNG outputs"| Storage
+    Storage -->|"files: shared weights and HF cache"| Coder
+    Storage -->|"files: shared weights and HF cache"| Fast
+    Storage -->|"files: shared weights and HF cache"| Embed
+    Storage -->|"files: shared weights and HF cache"| General
+
+    LiteLLM -.->|"Langfuse traces and /metrics responses: tokens, latency, GPU, KV cache"| Telemetry
+
+    classDef client fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:2px;
+    classDef control fill:#fef3c7,stroke:#d97706,color:#451a03,stroke-width:2px;
+    classDef inference fill:#dcfce7,stroke:#16a34a,color:#052e16,stroke-width:2px;
+    classDef research fill:#ffedd5,stroke:#ea580c,color:#431407,stroke-width:2px;
+    classDef external fill:#f3e8ff,stroke:#9333ea,color:#3b0764,stroke-width:2px;
+    classDef data fill:#e0e7ff,stroke:#4f46e5,color:#1e1b4b,stroke-width:2px;
+    classDef observe fill:#fce7f3,stroke:#db2777,color:#500724,stroke-width:2px;
+
+    class VSCode,WebChat,ComfyClient client;
+    class LiteLLM,MCP,LangGraph,Policy,Foundry control;
+    class Coder,Fast,Embed,General,Comfy inference;
+    class Retrieval,Crawl,Reranker research;
+    class Brave,Web external;
+    class Storage data;
+    class Telemetry observe;
+
+    style Clients fill:#eff6ff,stroke:#93c5fd,color:#172554;
+    style Control fill:#fffbeb,stroke:#fbbf24,color:#451a03;
+    style Inference fill:#f0fdf4,stroke:#86efac,color:#052e16;
+    style GPU0 fill:#f0fdf4,stroke:#4ade80,color:#052e16;
+    style GPU1 fill:#f0fdf4,stroke:#4ade80,color:#052e16;
+    style Research fill:#fff7ed,stroke:#fdba74,color:#431407;
+    style External fill:#faf5ff,stroke:#d8b4fe,color:#3b0764;
+    style Data fill:#eef2ff,stroke:#a5b4fc,color:#1e1b4b;
+    style Observe fill:#fdf2f8,stroke:#f9a8d4,color:#500724;
 ```
+
+Colors identify component roles: blue for clients, amber for routing and
+orchestration, green for model inference, orange for retrieval, purple for
+external systems, indigo for storage, and pink for observability. Dashed lines
+represent telemetry collection; solid lines carry application or persistence
+data. Foundry Local and ComfyUI/FLUX are opt-in Compose profiles.
 
 ## Web Research Flow
 
